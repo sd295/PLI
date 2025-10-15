@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <!-- Link to Google Fonts for a nice, clean look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chrono/1.0.5/chrono.min.js" integrity="sha512-M+drYDDPBZ3EJh5V8azIh545uq1AkZVXsR0Z70pea9X3x7jA+S1y+bmjXS8gtwUwLhZAeBDn+iHbsY2UI+jx5w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- Link to your new stylesheet -->
+    <link rel="stylesheet" href="pli.css">
+</head>
+<body>
+
+    <div class="chat-container">
+        <!-- Header with model title and switcher -->
+        <header class="chat-header">
+            <h2 id="model-title">PLI 7b1 LTE</h2>
+            <div class="model-switcher">
+                <button id="pli-btn" class="active">PLI6</button>
+                
+            </div>
+        </header>
+
+        <!-- Where messages appear -->
+        <main id="chat-box" class="chat-box">
+            <!-- Messages will be added here by JavaScript -->
+        </main>
+
+        <!-- The form for user input -->
+        <footer class="chat-footer">
+            <form id="chat-form" class="chat-form">
+                <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off">
+                <button type="submit" aria-label="Send Message">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2 .01 7z"/>
+                    </svg>
+                </button>
+            </form>
+        </footer>
+    </div>
+
+    <!-- This script controls the chat -->
+    <script src="chat.js"></script>
+    
+</body>
+<style>
+    body{
+        background-color: rgb(108, 108, 108);
+    }
+</style>
+</html>

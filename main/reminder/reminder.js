@@ -1,57 +1,75 @@
-// File: /reminder/reminder.js
+import processDate from '../date/date.js';
+import setTimer from '../timer/timer.js';
+import sendReminderNotification from '../notification/notification.this.js';
 
-// This is the most important line. It makes the function available to chat.js.
-export default function setReminder(args) {
-    
-    // Check if the chrono library was loaded correctly in index.html
-    if (typeof chrono === 'undefined') {
-        console.error("Chrono library is not loaded. Please add it to index.html");
-        return "Error: The reminder function is missing a required library. Please contact the administrator.";
+/**
+ * Main handler for reminder commands. Orchestrates parsing, timing, and notification.
+ * @param {string} args - The user input.
+ * @returns {Promise<string>} A confirmation message.
+ */
+export default async function handleReminder(args) {
+    const parseResult = await parseTimeAndText(args);
+
+    if (!parseResult) {
+        return "I'm not sure **when** to remind you. Give me a **time**";
     }
 
-    // Use the chrono library to parse the user's input
-    const results = chrono.parse(args);
+    const { reminderText, delay, timePhrase } = parseResult;
 
-    // Check if Chrono could understand the date/time in the request
-    if (results.length === 0) {
-        return "I'm sorry, I couldn't understand the date or time. Please be more specific, like: **remind me to call John tomorrow at 5pm**.";
-    }
-
-    // Extract the parsed information
-    const reminderDate = results[0].start.date();
-    // Get the text of the reminder (everything before the date that was found)
-    const reminderText = args.substring(0, results[0].index).trim(); 
-
-    // A reminder must have some text
-    if (reminderText.length === 0) {
-        return "Please tell me what you want to be reminded about. For example: **remind me to check email in 10 minutes**.";
-    }
-
-    // Get existing reminders from localStorage or create a new empty array
-    const reminders = JSON.parse(localStorage.getItem('chatReminders')) || [];
-
-    // Create a new reminder object
-    const newReminder = {
-        id: Date.now(), // Unique ID
-        text: reminderText,
-        triggerTime: reminderDate.getTime() // Store time as a numeric timestamp
+    // Define what should happen when the timer finishes.
+    const onTimerComplete = () => {
+        sendReminderNotification(reminderText);
     };
 
-    // Add the new reminder to the array
-    reminders.push(newReminder);
+    // Tell the timer module to start counting down.
+    setTimer(delay, onTimerComplete);
 
-    // Save the updated array back to localStorage
-    localStorage.setItem('chatReminders', JSON.stringify(reminders));
+    // Immediately confirm to the user that the timer has been set.
+    return `Okay, I will remind you to "${reminderText}" ${timePhrase}.`;
+}
 
-    // Format the date for a user-friendly confirmation message
-    const confirmationDate = reminderDate.toLocaleString(undefined, {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+/**
+ * Parses the input to find the reminder text and calculate the delay in milliseconds.
+ * @param {string} text - The input string.
+ * @returns {Promise<object|null>}
+ */
+async function parseTimeAndText(text) {
+    const timeRegex = /(in (\d+)\s+(second|seconds|minute|minutes|hour|hours)|on (\d{2}[\.\/]\d{2}[\.\/]\d{4}|\d{4}-\d{2}-\d{2}))/i;
+    const match = text.match(timeRegex);
+    if (!match) return null;
 
-    // Return a confirmation message to the user
-    return `Okay, I will remind you to **"${reminderText}"** on **${confirmationDate}**.`;
+    const timePhrase = match[0];
+    let delay = 0;
+
+    // Handle relative time: "in 5 minutes"
+    if (match[1]) {
+        const value = parseInt(match[2], 10);
+        const unit = match[3].toLowerCase();
+        if (unit.startsWith('second')) delay = value * 1000;
+        else if (unit.startsWith('minute')) delay = value * 60 * 1000;
+        else if (unit.startsWith('hour')) delay = value * 60 * 60 * 1000;
+    }
+    // Handle specific date: "on 25.12.2024"
+    else if (match[4]) {
+        const dateString = match[4];
+        const dateProcessingResult = await processDate(dateString, (normalizedDate) => new Date(`${normalizedDate}T09:00:00`).getTime());
+        if (dateProcessingResult) {
+            const triggerTime = dateProcessingResult.result;
+            delay = triggerTime - Date.now(); // Calculate delay from now until the future date
+        }
+    }
+
+    if (delay <= 0) return null; // Can't set a reminder for the past
+
+    const reminderText = cleanReminderText(text.replace(timePhrase, ''));
+    return { reminderText, delay, timePhrase };
+}
+
+function cleanReminderText(text) {
+    const junkWords = ['my', 'me', 'to', 'please', 'pls', 'plss', "that"];
+    const junkWordsRegex = new RegExp(`\\b(${junkWords.join('|')})\\b`, 'gi');
+    let cleaned = text.replace(/^(remind me to|remember to|me to|to)\s*/i, '');
+    cleaned = cleaned.replace(junkWordsRegex, '');
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+    return cleaned || "do that thing";
 }

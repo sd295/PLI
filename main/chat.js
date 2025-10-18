@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function getBotResponse(messageText) {
         showTypingIndicator();
+        logEachWord(messageText);
 
         const commandResponse = await handleCommand(messageText);
 
@@ -75,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 finalSender = 'Gemini';
             } else {
                 finalResponse = pliResponse;
-                finalSender = 'PLI 7b1';
+                finalSender = 'PLI 7b2';
             }
         } else {
             finalResponse = await getGemmaResponse(messageText);
@@ -86,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (finalResponse) {
             addMessageToChatbox(finalSender, finalResponse);
         } else {
-            addMessageToChatbox('System', 'Sorry, all services seem to be unavailable at the moment.');
+            addMessageToChatbox('**System**', 'Sorry, **all services** seem to be **unavailable** at the moment.');
         }
     }
 
@@ -152,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return data.candidates[0].content.parts[0].text;
         } catch (error) {
             console.error('Gemma API Error:', error);
-            return 'Sorry, something went wrong with the Gemma model.';
+            return 'Old API. **PLI7 is build on PLI6 so it has any older bugs**';
         }
     }
 
@@ -162,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let formattedText = String(text); // Ensure text is a string
         formattedText = formattedText.replace(
             /\*\*(.*?)\*\*/g,
-            '<strong style="color: #9333ea;">$1</strong>'
+            '<strong style="color: #8d2fe5ff;">$1</strong>'
         );
         return formattedText.replace(/\n/g, '<br>');
     }
@@ -205,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('chatHistory');
 
         if (model === 'pli6lte') {
-            if (modelTitle) modelTitle.textContent = 'PLI 6.X7LTE (Fallback Ready)';
+            if (modelTitle) modelTitle.textContent = 'PLI 7 when he wants  (when not PLI6)';
             if (pliBtn) pliBtn.classList.add('active');
             if (gemmaBtn) gemmaBtn.classList.remove('active');
             addMessageToChatbox('PLI 7b1', 'LTE model ready.');
@@ -229,43 +230,43 @@ document.addEventListener('DOMContentLoaded', () => {
             chatBox.scrollTop = chatBox.scrollHeight;
         }
     }
-    // In chat.js, ADD this entire block before the "INITIAL SETUP" section
+function requestNotificationPermission() {
+    // Check if the browser supports notifications
+    if (!("Notification" in window)) {
+        console.log("This **browser** does not **support desktop notification.**");
+        return;
+    }
 
-/**
- * Checks localStorage for due reminders, displays them, and removes them.
- */
-function checkReminders() {
-    const reminders = JSON.parse(localStorage.getItem('chatReminders')) || [];
-    const now = Date.now();
-    const remainingReminders = []; // To store reminders that are not yet due
-
-    let wasReminderTriggered = false;
-
-    reminders.forEach(reminder => {
-        // If the reminder's trigger time is in the past, it's due
-        if (reminder.triggerTime <= now) {
-            // Display the reminder in the chat box
-            addMessageToChatbox(
-                'Reminder', 
-                `Here is your reminder: **"${reminder.text}"**`
-            );
-            wasReminderTriggered = true; // Mark that we found a due reminder
-        } else {
-            // If it's not due yet, keep it in the list
-            remainingReminders.push(reminder);
-        }
-    });
-
-    // If we triggered any reminders, update localStorage with the remaining ones
-    if (wasReminderTriggered) {
-        localStorage.setItem('chatReminders', JSON.stringify(remainingReminders));
+    // Check the current permission status
+    if (Notification.permission !== 'denied' && Notification.permission !== 'granted') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                console.log("**Notification permission granted.**");
+            }
+        });
     }
 }
 
-// Check for reminders every 10 seconds (10000 milliseconds)
-setInterval(checkReminders, 10000);
 
-    // --- INITIAL SETUP ---
-    switchModel(currentModel);
-    loadChatHistory();
+function logEachWord(message) {
+    
+    // Split the message by spaces to get an array of words
+    const words = message.split(/\s+/);
+
+    // Loop through the array and print each word
+    words.forEach(word => {
+        // We can also remove common punctuation for a cleaner word list
+        const cleanedWord = word.replace(/[.,!?]/g, '');
+        if (cleanedWord) { // Ensure we don't log empty strings
+            console.log(cleanedWord);
+        }
+    });
+    
+}
+
+// --- INITIAL SETUP ---
+switchModel(currentModel);
+loadChatHistory();
+requestNotificationPermission(); // <-- ADD THIS LINE
+
 });

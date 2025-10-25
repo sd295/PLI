@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pi Visit 3 Islands</title>
+  <style>
+    body {
+      background-color: #0b0c10;
+      color: #c5c6c7;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      min-height: 100vh;
+      margin: 0;
+      padding-top: 80px;
+      overflow-y: auto;
+    }
+
+ .cho {
+    position: fixed;
+    top: 20px;
+    display: flex;
+    flex-wrap: wrap;             /* allow multiple lines */
+    gap: 10px;                   /* spacing between buttons */
+    background: rgba(20, 20, 20, 0.8);
+    padding: 10px 15px;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(81, 0, 255, 0.3);
+    width: 90%;                  /* adapt width, or max-content */
+    max-width: 1200px;           /* prevent too wide */
+    justify-content: center;      /* center buttons */
+}
+
+/* Each button will take ~1/10 of container width minus gaps */
+.cho > * {
+    flex: 0 0 calc(10% - 9px); /* 10% per button minus gap */
+    text-align: center;
+    font-size: 12px;
+    min-width: 60px;            /* keep buttons readable */
+}
+
+/* Hover / active effect for Phasmo-style glowing */
+.cho > * {
+    background: transparent;
+    color: #66fcf1;
+    border: 2px solid #45098e;
+    border-radius: 6px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.cho > *:hover {
+    background-color: #45a29e;
+    color: #0b0c10;
+    box-shadow: 0 0 10px #66fcf1;
+}
+
+.cho > *.active {
+    background-color: #66fcf1;
+    color: #0b0c10;
+    border-radius: 50%; /* circular effect */
+    width: 50px;
+    height: 50px;
+    font-size: 12px;
+    box-shadow: 0 0 15px #66fcf1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+    button {
+      background: transparent;
+      color: #66fcf1;
+      border: 2px solid #45a29e;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 14px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    button:hover {
+      background-color: #45a29e;
+      color: #0b0c10;
+      box-shadow: 0 0 10px #66fcf1;
+    }
+
+    /* Active button style */
+    button.active {
+      background-color: #66fcf1;
+      color: #ffffff;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 12px;
+      box-shadow: 0 0 15px #66fcf1;
+    }
+
+.country {
+    margin-top: 250px;
+    width: 80%;
+    max-width: 800px;
+    display: flex;
+    flex-wrap: wrap;       /* allow multiple rows */
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Each item takes roughly 1/8 of the container */
+.country > * {
+    flex: 0 0 calc(12.5% - 7px); /* 12.5% = 1/8 of row, minus half gap */
+    text-align: center;
+    box-sizing: border-box;
+}
+
+
+    .country-item {
+      width: 100%;
+      padding: 6px 12px;
+      font-size: 18px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+      color: #85a2bf;
+      transition: all 0.2s;
+    }
+
+    .country-item:hover {
+      background-color: rgba(102, 252, 241, 0.1);
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="cho">
+    <button id="forest">Forest</button>
+    <button id="desert">Desert</button>
+    
+    <button id="mountain">Mountain</button>
+    <button id="plains">Plains</button>
+    <button id="river">River</button>
+    <button id="lake">Lakes</button>
+    <button id="WC">Winter Cold</button>
+    <button id="WW">Winter Warm</button>
+    <button id="SW">Summer Warm</button>
+    <button id="SSn">Small Snow</button>
+    <button id="BSn">Big Snow</button>
+    <button id="VW">Windy</button>
+    <button id="LW">No Wind</button>
+    <button id="beach">Beach</button>
+    <button id="SP">Small Populat</button>
+    <button id="BP">Big populat</button>
+    <button id="bear">Bear</button>
+    <button id="island">Island</button>
+  </div>
+
+  <div class="country" id="country"></div>
+
+  <script>
+    // Mock data with multiple terrain types
+    const countries = [
+      { name: "Afganistan", terrain: ["mountain", "desert", "plains", "river", "lake", "WW", "SW", "SSn", "VW", "BP"] },
+      { name: "Albania", terrain: ["mountain", "plains", "forest", "river", "lake", "sea", "WW", "SW", "SSn", "VW", "beach"] },
+      { name: "Algeria", terrain: ["mountain", "plains", "desert", "sea", "WW", "SW", "VW", "beach", "BP"] },
+      { name: "Andorra", terrain: ["mountain", "forest", "WC", "SW", "SSn", "LW", "SP"] },
+      { name: "Angola", terrain: ["mountain", "plains", "desert", "forest", "river", "beach", "WW", "SW", "BP"] },
+      { name: "Antigua and Barbuda", terrain: ["beach", "WW", "SW", "VW", "SP"] },
+      { name: "Argentina", terrain: ["mountain", "plains", "desert", "forest", "river", "beach", "SSn", "SW", "VW", "BP"] },
+      { name: "Armenia", terrain: ["mountain", "forest", "WC", "SW", "LW", "BSn"] },
+      { name: "Australia", terrain: ["mountain","island", "plains", "desert", "forest", "river", "beach", "WW", "SW", "SSn", "LW"] },
+      { name: "Austria", terrain: ["mountain", "plains", "forest", "river", "lake", "WC", "SW", "LW", "BSn"] },
+      { name: "Azerbaijan", terrain: ["mountain", "plains", "forest", "river", "beach", "WW", "SW", "BSn", "LW"] },
+      { name: "Bahamas", terrain: ["beach", "WW", "SW", "VW", "SP"] },
+      { name: "Bahrain", terrain: ["beach", "WW", "SW", "LW"] },
+      { name: "Bangladesh", terrain: ["plains", "forest", "river", "beach", "WW", "SW", "VW", "BP"] },
+      { name: "Barbados", terrain: ["beach", "WW", "SW", "VW", "SP"] },
+      { name: "Belarus", terrain: ["plains", "forest", "river", "WC", "SW", "SSn", "LW", "lake"] },
+      { name: "Belgium", terrain: ["plains", "river", "beach", "WW", "SW", "SSn", "LW"] },
+      { name: "Belize", terrain: ["plains", "forest", "river", "beach", "WW", "SW", "VW", "SP"] },
+      { name: "Benin", terrain: ["plains", "forest", "river", "beach", "WW", "SW", "LW", "SP"] },
+      { name: "Bhutan", terrain: ["mountain", "forest", "river", "WC", "SW", "BSn", "LW"] },
+      { name: "Bolivia", terrain: ["mountain", "plains", "desert", "forest", "river", "lake", "WC", "SW", "BSn", "LW"] },
+      { name: "Bosnia and Herzegovina", terrain: ["mountain", "forest", "river", "WC", "SW", "BSn", "LW"] },
+      { name: "Botswana", terrain: ["plains", "desert", "river", "WW", "SW", "LW"] },
+      { name: "Brazil", terrain: ["mountain", "plains", "forest", "river", "beach", "WW", "SW", "SSn", "LW", "BP"] },
+      { name: "Brunei", terrain: ["forest", "beach", "WW", "SW", "LW", "SP"] },
+      { name: "Bulgaria", terrain: ["mountain", "bear","plains", "forest", "river", "beach", "WC", "SW", "BSn", "LW", "lake"] },
+      { name: "Burkina Faso", terrain: ["plains", "desert", "river", "WW", "SW", "LW"] },
+      { name: "Burundi", terrain: ["mountain", "forest", "lake", "WW", "SW", "LW"] },
+      { name: "Cabo Verde", terrain: ["mountain", "beach", "WW", "SW", "VW", "SP"] },
+      { name: "Cambodia", terrain: ["plains","bear", "forest", "river", "beach", "WW", "SW", "LW"] },
+      { name: "Cameroon", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "SSn", "LW"] },
+      { name: "Canada", terrain: ["mountain", "island","plains", "forest", "river", "bear", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+      { name: "Central African Republic", terrain: ["plains", "forest", "river", "lake", "WW", "SW", "LW"] },
+      { name: "Chad", terrain: ["mountain", "plains", "desert", "river", "lake", "WW", "SW", "SSn", "LW"] },
+      { name: "Chile", terrain: ["mountain", "plains", "desert", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW"] },
+      { name: "China", terrain: ["mountain","bear", "plains", "desert", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+      { name: "Colombia", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "BSn", "LW"] },
+      { name: "Comoros", terrain: ["mountain", "forest", "beach", "WW", "SW", "VW", "SP"] },
+      { name: "Congo", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "LW"] },
+      { name: "Costa Rica", terrain: ["mountain", "forest", "river", "lake", "beach", "WW", "SW", "LW"] },
+      { name: "Côte d'Ivoire", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "LW"] },
+      { name: "Croatia", terrain: ["mountain","island", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "LW"] },
+      { name: "Cuba", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW"] },
+      { name: "Cyprus", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "SSn", "LW"] },
+      { name: "Czechia", terrain: ["mountain", "plains", "forest", "river", "lake", "WC", "SW", "BSn", "LW"] },
+      { name: "Democratic Republic of the Congo", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "SSn", "LW", "BP"] },
+      { name: "Denmark", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "SSn", "VW"] },
+      { name: "Djibouti", terrain: ["mountain", "plains", "desert", "lake", "beach", "WW", "SW", "LW"] },
+      { name: "Dominica", terrain: ["mountain", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+      { name: "Dominican Republic", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "SSn", "VW"] },
+      { name: "Ecuador", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "BSn", "LW"] },
+      { name: "Egypt", terrain: ["plains", "desert", "river", "lake", "beach", "WW", "SW", "LW", "BP"] },
+      { name: "El Salvador", terrain: ["mountain", "forest", "river", "lake", "beach", "WW", "SW", "LW"] },
+      { name: "Equatorial Guinea", terrain: ["mountain", "forest", "river", "lake", "beach", "WW", "SW", "LW"] },
+      { name: "Eritrea", terrain: ["mountain", "plains", "desert", "river", "lake", "beach", "WW", "SW", "SSn", "LW"] },
+      { name: "Estonia", terrain: ["plains", "forest", "river", "lake", "beach", "WC", "SW", "SSn", "VW"] },
+      { name: "Eswatini", terrain: ["mountain", "plains", "forest", "river", "lake", "WW", "SW", "LW"] },
+      { name: "Ethiopia", terrain: ["mountain", "plains", "forest", "river", "lake", "WW", "SW", "SSn", "LW", "BP"] },
+      { name: "Fiji", terrain: ["mountain", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+      { name: "Finland", terrain: ["plains","island","bear", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW"] },
+      { name: "France", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+      { name: "Gabon", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "LW"] },
+      { name: "Gambia", terrain: ["plains", "river", "beach", "WW", "SW", "LW"] },
+      { name: "Georgia", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "LW"] },
+      { name: "Germany", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+      { name: "Ghana", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "LW", "BP"] },
+      { name: "Greece", terrain: ["mountain","island", "bear", "plains", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW"] },
+      { name: "Grenada", terrain: ["mountain", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+      { name: "Guatemala", terrain: ["mountain", "forest", "river", "lake", "beach", "WW", "SW", "SSn", "LW"] },
+      { name: "Guinea", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "LW"] },
+      { name: "Guinea-Bissau", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "LW"] },
+      { name: "Guyana", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "LW", "SP"] },
+      { name: "Haiti", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW"] },
+      { name: "Honduras", terrain: ["mountain", "forest", "river", "lake", "beach", "WW", "SW", "SSn", "LW"] },
+      { name: "Hungary", terrain: ["plains", "river", "lake", "WC", "SW", "SSn", "LW"] },
+      { name: "Iceland", terrain: ["mountain", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "SP"] },
+      { name: "India", terrain: ["mountain", "plains","bear", "desert", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+      { name: "Indonesia", terrain: ["mountain", "island","forest", "river", "lake", "beach", "WW", "SW", "SSn", "VW", "BP"] },
+      { name: "Iran", terrain: ["mountain", "plains", "desert", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "LW", "BP"] },
+      { name: "Iraq", terrain: ["mountain", "plains", "desert", "river", "lake", "beach", "WW", "SW", "SSn", "LW", "BP"] },
+      { name: "Ireland", terrain: ["mountain", "plains", "river", "lake", "beach", "WW", "SW", "SSn", "VW"] },
+      { name: "Israel", terrain: ["plains", "desert", "mountain", "river", "lake", "beach", "WW", "SW", "LW"] },
+      { name: "Italy", terrain: ["mountain","bear", "plains", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+      { name: "Jamaica", terrain: ["mountain", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+      { name: "Japan", terrain: ["mountain","island", "plains", "forest", "river", "bear", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+      { name: "Jordan", terrain: ["mountain", "plains", "desert", "river", "lake", "beach", "WW", "SW", "LW"] },
+      { name: "Kazakhstan", terrain: ["mountain", "plains", "desert", "river", "lake", "WC", "SW", "SSn", "LW", "BP"] },
+      { name: "Kenya", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "LW", "BP"] },
+      { name: "Kiribati", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Kuwait", terrain: ["plains", "desert", "beach", "WW", "SW", "LW"] },
+{ name: "Kyrgyzstan", terrain: ["mountain", "plains", "river", "lake", "WC", "SW", "BSn", "LW"] },
+{ name: "Laos", terrain: ["mountain","bear", "forest", "river", "lake", "WW", "SW", "LW"] },
+{ name: "Latvia", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "SSn", "LW"] },
+{ name: "Lebanon", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WC", "SW", "SSn", "VW"] },
+{ name: "Lesotho", terrain: ["mountain", "plains", "river", "lake", "WW", "SW", "BSn", "LW", "SP"] },
+{ name: "Liberia", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "LW"] },
+{ name: "Libya", terrain: ["plains", "desert", "river", "lake", "beach", "WW", "SW", "LW"] },
+{ name: "Liechtenstein", terrain: ["mountain", "river", "lake", "WC", "SW", "BSn", "LW", "SP"] },
+{ name: "Lithuania", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "SSn", "LW"] },
+{ name: "Luxembourg", terrain: ["plains", "forest", "river", "lake", "WW", "SW", "LW", "SP"] },
+{ name: "Madagascar", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "Malawi", terrain: ["mountain", "plains", "forest", "river", "lake", "WW", "SW", "LW", "BP"] },
+{ name: "Malaysia", terrain: ["mountain","bear", "plains", "forest", "river", "lake", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "Maldives", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Mali", terrain: ["plains", "desert", "river", "lake", "WW", "SW", "LW", "BP"] },
+{ name: "Malta", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "LW", "SP"] },
+{ name: "Marshall Islands", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Mauritania", terrain: ["plains", "desert", "river", "lake", "WW", "SW", "LW"] },
+{ name: "Mauritius", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "LW", "SP"] },
+{ name: "Mexico", terrain: ["mountain", "plains",  "desert", "forest", "bear","river", "lake", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "Micronesia", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Moldova", terrain: ["plains", "forest", "river", "lake", "WW", "SW", "SSn", "LW"] },
+{ name: "Monaco", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "LW", "SP"] },
+{ name: "Mongolia", terrain: ["mountain","bear", "plains", "desert", "river", "lake", "WC", "SW", "SSn", "LW", "SP"] },
+{ name: "Montenegro", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WC", "SW", "SSn", "VW", "SP"] },
+{ name: "Morocco", terrain: ["mountain", "plains", "desert", "forest", "river", "lake", "beach", "WC", "SW", "SSn", "VW", "BP"] },
+{ name: "Mozambique", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "Myanmar", terrain: ["mountain", "plains", "forest", "river", "lake", "beach","bear", "WW", "SW", "LW", "BP"] },
+{ name: "Namibia", terrain: ["mountain", "plains", "desert", "river", "lake", "beach", "WW", "SW", "LW", "SP"] },
+{ name: "Nauru", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Nepal", terrain: ["mountain", "plains","bear", "forest", "river", "lake", "WC", "SW", "BSn", "VW", "BP"] },
+{ name: "Netherlands", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "New Zealand", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "SP"] },
+{ name: "Nicaragua", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "Niger", terrain: ["plains", "desert", "river", "lake", "WW", "SW", "LW", "BP"] },
+{ name: "Nigeria", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "North Korea", terrain: ["mountain","bear", "plains", "forest", "river", "lake", "WC", "SW", "BSn", "VW", "BP"] },
+{ name: "North Macedonia", terrain: ["mountain", "plains", "forest", "river", "lake", "WC", "SW", "SSn", "LW", "SP"] },
+{ name: "Norway", terrain: ["mountain", "island","plains", "bear", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "SP"] },
+{ name: "Oman", terrain: ["mountain", "plains", "desert", "river", "beach", "WW", "SW", "LW", "SP"] },
+{ name: "Pakistan", terrain: ["mountain","bear", "plains", "desert", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+{ name: "Palau", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Palestine State", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "LW", "SP"] },
+{ name: "Panama", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Papua New Guinea", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "Paraguay", terrain: ["plains", "forest", "river", "lake", "WW", "SW", "LW", "SP"] },
+{ name: "Peru", terrain: ["mountain", "plains", "forest", "river", "lake", "WW", "SW", "BSn", "VW", "BP"] },
+{ name: "Philippines", terrain: ["mountain", "island", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "Poland", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WC", "SW", "SSn", "VW", "BP"] },
+{ name: "Portugal", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "Qatar", terrain: ["plains", "desert", "beach", "WW", "SW", "LW", "SP"] },
+{ name: "Romania", terrain: ["mountain","bear", "plains", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+{ name: "Russia", terrain: ["mountain", "plains", "forest", "river", "bear", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+{ name: "Rwanda", terrain: ["mountain", "plains", "forest", "river", "lake", "WW", "SW", "VW", "BP"] },
+{ name: "Saint Kitts and Nevis", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Saint Lucia", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Saint Vincent and the Grenadines", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Samoa", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "San Marino", terrain: ["mountain", "plains", "forest", "river", "lake", "WW", "SW", "SSn", "LW", "SP"] },
+{ name: "Sao Tome and Principe", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Saudi Arabia", terrain: ["mountain", "plains", "desert", "river", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "Senegal", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "Serbia", terrain: ["mountain", "plains", "forest", "river", "lake", "WC", "SW", "SSn", "VW", "SP"] },
+{ name: "Seychelles", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Sierra Leone", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "Singapore", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "Slovakia", terrain: ["mountain","bear", "plains", "forest", "river", "lake", "WC", "SW", "BSn", "VW", "SP"] },
+{ name: "Slovenia", terrain: ["mountain", "plains", "forest", "river", "lake", "WC", "SW", "BSn", "VW", "SP"] },
+{ name: "Solomon Islands", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Somalia", terrain: ["plains", "desert", "river", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "South Africa", terrain: ["mountain", "plains", "desert", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "South Korea", terrain: ["mountain","bear", "plains", "forest", "river", "lake", "beach", "WC", "SW", "SSn", "VW", "BP"] },
+{ name: "South Sudan", terrain: ["plains", "river", "lake", "WW", "SW", "LW", "BP"] },
+{ name: "Spain", terrain: ["mountain","bear", "plains", "forest", "river", "lake", "beach", "WC", "SW", "SSn", "VW", "BP"] },
+{ name: "Sri Lanka", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "Sudan", terrain: ["plains", "desert", "river", "lake", "WW", "SW", "LW", "BP"] },
+{ name: "Suriname", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Sweden", terrain: ["mountain","island", "bear","plains", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+{ name: "Switzerland", terrain: ["mountain", "plains", "forest", "river", "lake", "WC", "SW", "BSn", "VW", "SP"] },
+{ name: "Syria", terrain: ["mountain", "plains", "desert", "forest", "river", "lake", "beach", "WC", "SW", "SSn", "VW", "BP"] },
+{ name: "Tajikistan", terrain: ["mountain", "plains", "river", "lake", "WC", "SW", "BSn", "VW", "SP"] },
+{ name: "Tanzania", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "Thailand", terrain: ["mountain", "bear", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "Timor-Leste", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Togo", terrain: ["plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "Tonga", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Trinidad and Tobago", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Tunisia", terrain: ["mountain", "plains", "desert", "forest", "river", "lake", "beach", "WW", "SW", "SSn", "VW", "BP"] },
+{ name: "Turkey", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+{ name: "Turkmenistan", terrain: ["mountain", "plains", "desert", "river", "WW", "SW", "LW", "SP"] },
+{ name: "Tuvalu", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Uganda", terrain: ["mountain", "plains", "forest", "river", "lake", "WW", "SW", "VW", "BP"] },
+{ name: "Ukraine", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WC", "SW", "SSn", "VW", "BP"] },
+{ name: "United Arab Emirates", terrain: ["plains", "desert", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "United Kingdom", terrain: ["mountain", "plains","island", "forest", "river", "lake", "beach", "WC", "SW", "SSn", "VW", "BP"] },
+{ name: "United States of America", terrain: ["mountain", "island", "plains", "desert", "forest", "river", "lake", "bear", "beach", "WC", "SW", "BSn", "VW", "BP"] },
+{ name: "Uruguay", terrain: ["plains", "river", "lake", "beach", "WW", "SW", "LW", "SP"] },
+{ name: "Uzbekistan", terrain: ["mountain", "plains", "desert", "river", "lake", "WW", "SW", "LW", "BP"] },
+{ name: "Vanuatu", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "SP"] },
+{ name: "Venezuela", terrain: ["mountain", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "Vietnam", terrain: ["mountain","bear", "plains", "forest", "river", "lake", "beach", "WW", "SW", "VW", "BP"] },
+{ name: "Yemen", terrain: ["mountain", "plains", "desert", "river", "beach", "WW", "SW", "LW", "BP"] },
+{ name: "Zambia", terrain: ["mountain", "plains", "forest", "river", "lake", "WW", "SW", "VW", "BP"] },
+{ name: "Zimbabwe", terrain: ["mountain", "plains", "forest", "river", "lake", "WW", "SW", "VW", "BP"] },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ];
+
+    const container = document.getElementById("country");
+    const filterButtons = document.querySelectorAll(".cho button");
+    let activeFilters = [];
+
+    function renderCountries() {
+      container.innerHTML = "";
+
+      countries.forEach(c => {
+        const div = document.createElement("div");
+        div.className = "country-item";
+        div.textContent = c.name;
+
+        // Show only if it matches at least one active filter (or all if none)
+        if (
+          activeFilters.length === 0 ||
+          activeFilters.every(f => c.terrain.includes(f))
+        ) {
+          div.classList.remove("hidden");
+        } else {
+          div.classList.add("hidden");
+        }
+
+        container.appendChild(div);
+      });
+    }
+
+    // Toggle filters when buttons clicked
+    filterButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.id;
+
+        if (activeFilters.includes(id)) {
+          // Remove filter
+          activeFilters = activeFilters.filter(f => f !== id);
+          btn.classList.remove("active");
+        } else {
+          // Add filter
+          activeFilters.push(id);
+          btn.classList.add("active");
+        }
+
+        renderCountries();
+      });
+    });
+
+    renderCountries();
+  </script>
+</body>
+</html>

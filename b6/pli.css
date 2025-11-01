@@ -1,0 +1,304 @@
+/* General Body and Font Setup */
+body {
+    margin: 0;
+    font-family: 'Nunito', sans-serif;
+    color: #f0f0f0; /* Light text color for dark background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden; /* Prevents scrollbars on the main page */
+}
+/* --- Weather Card Styling --- */
+#auth-container {
+    padding: 10px 20px;
+    text-align: center;
+}
+
+#auth-container button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background-color: #4285F4;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+/* style.css */
+
+/* Style for the container that holds the mirrored site and its controls */
+.mirrored-site-container {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+/* Flexbox container for the text and the fullscreen button */
+.mirror-controls {
+    display: flex;
+    justify-content: space-between; /* Pushes items to opposite ends */
+    align-items: center; /* Vertically aligns items */
+    margin-bottom: 8px;
+    font-size: 0.9em;
+}
+
+/* Style for the new "Go Fullscreen" button */
+.fullscreen-btn {
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s;
+}
+
+.fullscreen-btn:hover {
+    background-color: #f0f0f0;
+}
+
+/* Note at the bottom */
+.mirror-note {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+
+
+/* VERY IMPORTANT: Styles for when the iframe IS in fullscreen mode */
+/* This ensures it takes up the whole screen and has a white background */
+iframe:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    background-color: #fff;
+}
+
+/* Fallback for older browsers like Safari/Chrome */
+iframe:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    background-color: #fff;
+}
+
+#signout_button {
+    background-color: #db4437;
+}
+.weather-card {
+    background: rgba(0, 0, 0, 0.25); /* A slightly transparent, dark background */
+    border-radius: 15px; /* Softer corners */
+    padding: 16px;
+    margin-top: 8px; /* Adds a little space from the top of the message bubble */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px); /* Frosty glass effect if browser supports it */
+    -webkit-backdrop-filter: blur(5px);
+    max-width: 280px; /* Prevents the card from getting too wide */
+}
+
+.weather-location {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: #ffffff; /* White and bold for the location */
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* A subtle separator line */
+    padding-bottom: 8px;
+}
+
+.weather-main {
+    display: flex;
+    align-items: center; /* Vertically aligns the icon and the text */
+    gap: 16px; /* Space between the icon and the details */
+}
+
+.weather-icon {
+    width: 64px;  /* Uses the native 64x64 icon size from the API */
+    height: 64px;
+}
+
+.weather-details {
+    display: flex;
+    flex-direction: column; /* Stacks temperature and condition vertically */
+}
+
+.weather-temp {
+    font-size: 2.8em; /* Makes the temperature the main focus */
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1; /* Tightens up the line spacing */
+}
+
+.weather-condition {
+    font-size: 1em;
+    color: #d0d0d0; /* A slightly dimmer color for the text description */
+    margin-top: 4px;
+}
+
+/* Main Chat Container with Animated Background */
+.chat-container {
+    width: 100%;
+    max-width: 450px; /* Adjust as needed */
+    height: 95vh;
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+    box-shadow: 0 10px 80px rgba(0, 0, 0, 0.9);
+    overflow: hidden; /* Important for border-radius */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    /* Your animated background gradient */
+    background: linear-gradient(15deg, black, rgb(55, 6, 103), black, black, rgb(55, 6, 103), black), rgb(55, 6, 103);
+    background-size: 400% 400%;
+    animation: pan-background 30s ease-in-out infinite alternate;
+}
+
+@keyframes pan-background {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+/* Chat Header Styling */
+.chat-header {
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+    font-weight: 700;
+}
+
+.model-switcher button {
+    background: transparent;
+    border: 1px solid #888;
+    color: #ccc;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+    margin-left: 5px;
+}
+
+.model-switcher button.active {
+    background-color: #f0f0f0;
+    color: #1a1a1a;
+    border-color: #f0f0f0;
+}
+
+/* Chat Box / Message Area */
+.chat-box {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto; /* Enables scrolling for messages */
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Space between messages */
+}
+
+/* Individual Message Styling */
+.message {
+    max-width: 80%;
+    padding: 10px 15px;
+    border-radius: 18px;
+    line-height: 1.5;
+    word-wrap: break-word; /* Prevents long words from overflowing */
+}
+
+.user-message {
+    background-color: #5a1e9e; /* A brighter purple for the user */
+    color: white;
+    align-self: flex-end; /* Aligns user messages to the right */
+    border-bottom-right-radius: 4px; /* "Tail" effect */
+}
+
+.bot-message {
+    background-color: #333; /* Dark gray for the bot */
+    /* --- Style Change Here --- */
+    color: #ffffff; /* A readable, vibrant dark blue for the answer text */
+    font-weight: 700;   /* Makes the entire answer text bold */
+    /* ----------------------- */
+    align-self: flex-start; /* Aligns bot messages to the left */
+    border-bottom-left-radius: 4px; /* "Tail" effect */
+}
+
+
+/* Styling for the bolded text from **markdown** */
+.message strong {
+    font-weight: 700;
+    color: #c398ff; /* Highlight color for bold text (e.g., from **...**) */
+}
+
+/* Chat Footer and Input Form */
+.chat-footer {
+    padding: 10px 15px;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-form {
+    display: flex;
+    gap: 10px;
+}
+
+#user-input {
+    flex-grow: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 10px 15px;
+    color: white;
+    font-size: 1em;
+}
+
+#user-input::placeholder {
+    color: #aaa;
+}
+
+#user-input:focus {
+    outline: none;
+    border-color: #a855f7; /* Purple focus ring */
+    box-shadow: 0 0 5px rgba(168, 85, 247, 0.5);
+}
+
+.chat-form button {
+    background: #7e22ce; /* Vibrant purple */
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.chat-form button svg {
+    fill: white;
+}
+
+.chat-form button:hover {
+    background: #9333ea;
+}
+
+/* Custom Scrollbar for a polished look */
+.chat-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-box::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-box::-webkit-scrollbar-thumb {
+    background-color: #5a1e9e;
+    border-radius: 10px;
+}

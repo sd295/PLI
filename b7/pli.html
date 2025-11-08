@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLI 7 LTE</title>
+    <link rel="stylesheet" href="pli.css">
+    <link rel="icon" type="image/x-icon" href="/images/faviconn.ico" >
+    
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- 2. GAPI (Google API) Script with the onload callback -->
+    <script src="https://apis.google.com/js/api.js?onload=startApp" async defer></script>
+    
+    <!-- CRITICAL: Load Google's libraries first in the head -->
+
+</head>
+<body>
+
+    <div class="chat-container">
+        <header class="chat-header">
+            <h2 id="model-title">PLI 7b1 LTE</h2>
+            <div class="model-switcher">
+                <button id="connect-google-btn" >PLI6</button>
+            </div>
+        </header>
+        <main id="chat-box" class="chat-box"></main>
+        <footer class="chat-footer">
+            <form id="chat-form" class="chat-form">
+                <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off">
+                <button type="submit" aria-label="Send Message">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2 .01 7z"/>
+                    </svg>
+                </button>
+            </form>
+        </footer>
+    </div>
+
+    <!-- CRITICAL: Your script must be a 'module' and load at the end of the body -->
+    <script type="module" src="chat.js"></script>
+    <script type="module" src="/reminder/googleAuth.js"></script>
+
+    
+</body>
+<style>
+
+    
+</style>
+
+</html>

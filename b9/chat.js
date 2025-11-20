@@ -317,20 +317,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 msg = await processExtern(msg);
                 addMessageToChatbox('Local Command', msg);
             }
-            const geminiShort = await getGeminiResponse(`Answer shortly about: ${messageText}, context: local commands executed.`);
+const geminiShort = await getGeminiResponse(`Answer shortly (1-2 sentences(if needed)) about: ${messageText}, dont use emoji, respond simple, return no image and think that images are displayed so you can make reference about it, Model name PLI7 with gemini fallback, but dont say it clear just a way to point like wou can see above, dont respond to words like visualization, weather and mirror, all of this is already done by PLI 7`);
             if (geminiShort) addMessageToChatbox('Gemini', geminiShort);
             return;
         }
 
         // 2️⃣ Fallback to PLI
         let pliResponse = await getPliResponse(messageText);
-        const unhelpfulContent = ["I'm not sure about", "I couldn't solve"];
+        const unhelpfulContent = [
+        "I'm not sure about",
+        "I couldn't solve that math problem.",
+        "That's a great question about"
+    ];
 
         let finalResponse = "";
         let finalSender = "";
 
         if (!pliResponse || unhelpfulContent.some(p => pliResponse.startsWith(p))) {
-            const geminiResponse = await getGeminiResponse(messageText);
+            const geminiResponse = await getGeminiResponse(`Answer shortly (1-2 max 4(if needed) sentences) about: ${messageText}, dont use emoji, respond simple, return no image and think that images are displayed so you can make reference about it, Model name PLI7 with gemini fallback, but dont say it clear just a way to point like wou can see above, dont respond to words like visualization, weather and mirror, all of this is already done by PLI 7`);
             if (geminiResponse) {
                 finalResponse = geminiResponse;
                 finalSender = "Gemini";

@@ -93,38 +93,24 @@ document.addEventListener('DOMContentLoaded', () => {
     //  AUDIO HANDLING & RECORDING
     // ===================================================================================
 
-     // ===================================================================================
-    //  AUDIO HANDLING & RECORDING (FIXED FOR SAFARI/MOBILE & API)
-    // ===================================================================================
-
-    // 1. Define Global Audio Variables
-    let audioMimeType = 'audio/webm'; // Default fallback
-
-    function setupAudioRecording() {
+     function setupAudioRecording() {
         if (!sendMicBtn) return;
 
         let mediaRecorder;
         let audioChunks = [];
         let pressTimer;
         let isRecording = false;
-        const LONG_PRESS_MS = 400;
+        const LONG_PRESS_MS = 400; // Slightly faster response
 
-        // --- DETECT SUPPORTED MIME TYPE (Critical for iOS vs Android) ---
-        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-            audioMimeType = 'audio/webm;codecs=opus';
-        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-            audioMimeType = 'audio/mp4'; // iOS / Safari
-        } else {
-            audioMimeType = 'audio/webm'; // Standard Fallback
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.warn("Audio recording not supported in this browser.");
+            return;
         }
-        console.log("Using Audio MimeType:", audioMimeType);
 
         const startRecording = async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // Initialize Recorder with detected MimeType
-                mediaRecorder = new MediaRecorder(stream, { mimeType: audioMimeType });
+                mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
 
                 mediaRecorder.ondataavailable = (event) => {
@@ -132,27 +118,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 mediaRecorder.onstop = async () => {
+                    // 1. Reset UI immediately
                     document.body.classList.remove('is-recording');
                     
-                    // Create Blob with the EXACT mime type used to record
-                    const audioBlob = new Blob(audioChunks, { type: audioMimeType });
-                    
-                    if (audioBlob.size > 1000) { 
-                        addMessageToChatbox('user', '🎤 Voice Memo sent...');
+                    // 2. Process Audio
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    if (audioBlob.size > 3000) { // Minimum size check to avoid accidental taps
+                        addMessageToChatbox('user', '🎤 Voice Memo');
                         await sendAudioToGemini(audioBlob);
+                    } else {
+                        // Optional: Feedback for "too short"
                     }
 
+                    // 3. Stop tracks
                     stream.getTracks().forEach(track => track.stop());
                 };
 
                 mediaRecorder.start();
                 isRecording = true;
+                
+                // TRIGGER CSS ANIMATIONS
                 document.body.classList.add('is-recording');
+                
+                // Haptic feedback if available (Mobile only)
                 if (window.navigator.vibrate) window.navigator.vibrate(50);
 
             } catch (err) {
-                console.error("Mic Error:", err);
-                alert("Microphone access denied or not supported.");
+                console.error("Error accessing microphone:", err);
                 document.body.classList.remove('is-recording');
             }
         };
@@ -165,104 +157,61 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // --- HANDLERS ---
+        // --- INPUT EVENT HANDLERS ---
+
         const handleStart = (e) => {
+            // If user has typed text, don't record, just let them click to send
             if (userInput.value.trim().length > 0) return;
-            pressTimer = setTimeout(startRecording, LONG_PRESS_MS);
+
+            pressTimer = setTimeout(() => {
+                startRecording();
+            }, LONG_PRESS_MS);
         };
 
         const handleEnd = (e) => {
             clearTimeout(pressTimer);
+            
             if (userInput.value.trim().length > 0) {
+                // Text Send Logic
                 handleTextMessage();
                 return;
             }
+
             if (isRecording) {
+                // User was holding, now released -> Send Audio
                 stopRecording();
             } else {
+                // User tapped quickly (no text, no record) -> Focus Input
                 userInput.focus();
             }
         };
 
-        // Touch
-        sendMicBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); }, { passive: false });
-        sendMicBtn.addEventListener('touchend', (e) => { e.preventDefault(); handleEnd(e); });
-        // Mouse
+        // Touch Events (Prioritize these for Mobile)
+        sendMicBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault(); 
+            handleStart(e);
+        }, { passive: false });
+
+        sendMicBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            handleEnd(e);
+        });
+
+        // Mouse Events (Desktop Fallback)
         sendMicBtn.addEventListener('mousedown', handleStart);
         sendMicBtn.addEventListener('mouseup', handleEnd);
+        
+        // Safety: If finger slides off button
         sendMicBtn.addEventListener('mouseleave', () => {
             clearTimeout(pressTimer);
             if (isRecording) stopRecording();
         });
     }
-
-    // --- GEMINI AUDIO API CALL (FIXED) ---
-    async function sendAudioToGemini(audioBlob) {
-        showTypingIndicator();
-        
-        // REPLACE WITH YOUR VALID API KEY
-        const API_KEY = "AIzaSyB9kpAZ7hsC0xIyStlaTk1r-bF8Q1O7U6o"; 
-        
-        // Use 1.5 Flash (Stable) or 2.0 Flash Exp (Experimental)
-        const MODEL = "gemini-2.5-flash-native-audio-preview-09-2025"; 
-
-        try {
-            const base64Audio = await blobToBase64(audioBlob);
-            
-            // Clean the Base64 string (remove data URL prefix if present)
-            const cleanBase64 = base64Audio.includes('base64,') 
-                ? base64Audio.split('base64,')[1] 
-                : base64Audio;
-
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: "Listen to this audio and respond concisely in plain text." },
-                                {
-                                    inline_data: {
-                                        // CRITICAL: Must match what the browser recorded
-                                        mime_type: audioMimeType, 
-                                        data: cleanBase64
-                                    }
-                                }
-                            ]
-                        }]
-                    })
-                }
-            );
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error("Gemini API Error Detail:", errorData);
-                throw new Error(`API Error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            const botText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            hideTypingIndicator();
-            if (botText) {
-                addMessageToChatbox('Gemini Audio', botText);
-            } else {
-                addMessageToChatbox('System', 'I heard you, but I didn\'t know what to say.');
-            }
-
-        } catch (error) {
-            console.error(error);
-            hideTypingIndicator();
-            addMessageToChatbox('System', `Error processing audio: ${error.message}. Check console for details.`);
-        }
-    }
-
+    // Helper: Convert Blob to Base64
     function blobToBase64(blob) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
+            reader.onloadend = () => resolve(reader.result.split(',')[1]); // Remove "data:audio/..." prefix
             reader.onerror = reject;
             reader.readAsDataURL(blob);
         });

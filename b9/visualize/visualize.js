@@ -1,5 +1,5 @@
 // ====================== CONFIGURATION ======================
-const GEMINI_API_KEY = "AIzaSyB9kpAZ7hsC0xIyStlaTk1r-bF8Q1O7U6o"; 
+const GEMINI_API_KEY = "AIzaSyAqciKc5qZ2z7YR9WT_4tY7grXdeJ7Z1ck"; 
 
 export default async function visualize(args = []) {
     // 1. Helper to safely get string from args

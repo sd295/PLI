@@ -3,7 +3,7 @@
 const WIKI_OUTPUT_COOLDOWN = 850;
 const WIKI_DATA_CACHE_LIFETIME = 6000000; 
 const MAX_IMAGES_PER_QUERY = 5;
-const GEMINI_API_KEY = "AIzaSyB9kpAZ7hsC0xIyStlaTk1r-bF8Q1O7U6o"; 
+const GEMINI_API_KEY = "AIzaSyAqciKc5qZ2z7YR9WT_4tY7grXdeJ7Z1ck"; 
 
 // ====================== STATE & CACHING ======================
 

@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pliApiUrl = 'https://fhf567456745.pythonanywhere.com/r/';
     
     // API Key (Ideally move this to a backend or env variable)
-    const GEMINI_API_KEY = "AIzaSyB9kpAZ7hsC0xIyStlaTk1r-bF8Q1O7U6o"; 
+    const GEMINI_API_KEY = "AIzaSyAqciKc5qZ2z7YR9WT_4tY7grXdeJ7Z1ck"; 
     // The specific model requested
     const AUDIO_MODEL_NAME = "gemini-2.5-flash-native-audio-preview-09-2025"; // 'gemini-2.5...' is not standard yet, using 2.0 Flash Exp which supports native audio
 
@@ -73,7 +73,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (chatForm) {
         chatForm.addEventListener('submit', function(event) {
             event.preventDefault();
-            handleTextMessage();
+            const messageText = userInput.value.trim();
+            if (messageText) {
+                addMessageToChatbox('user', messageText);
+                userInput.value = '';
+                getBotResponse(messageText);
+            }
         });
     }
 
@@ -281,9 +286,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function getGeminiResponse(messageText) {
+        const apiKey = "AIzaSyAqciKc5qZ2z7YR9WT_4tY7grXdeJ7Z1ck";
         try {
             const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${GEMINI_API_KEY}`,
+               "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=" + apiKey,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },

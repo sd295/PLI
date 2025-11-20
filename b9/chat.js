@@ -93,16 +93,15 @@ document.addEventListener('DOMContentLoaded', () => {
     //  AUDIO HANDLING & RECORDING
     // ===================================================================================
 
-    function setupAudioRecording() {
+     function setupAudioRecording() {
         if (!sendMicBtn) return;
 
         let mediaRecorder;
         let audioChunks = [];
         let pressTimer;
         let isRecording = false;
-        const LONG_PRESS_MS = 500;
+        const LONG_PRESS_MS = 400; // Slightly faster response
 
-        // Check for getUserMedia support
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             console.warn("Audio recording not supported in this browser.");
             return;
@@ -119,30 +118,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 mediaRecorder.onstop = async () => {
-                    // Hide UI
-                    sendMicBtn.classList.remove('recording');
-                    if (audioOverlay) audioOverlay.style.display = 'none';
+                    // 1. Reset UI immediately
+                    document.body.classList.remove('is-recording');
                     
-                    // Process Audio
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); // Gemini accepts WebM
-                    if (audioBlob.size > 0) {
-                        // Visual feedback
-                        addMessageToChatbox('user', '🎤 Audio sent...');
+                    // 2. Process Audio
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    if (audioBlob.size > 3000) { // Minimum size check to avoid accidental taps
+                        addMessageToChatbox('user', '🎤 Voice Memo');
                         await sendAudioToGemini(audioBlob);
+                    } else {
+                        // Optional: Feedback for "too short"
                     }
 
-                    // Stop all tracks to release mic
+                    // 3. Stop tracks
                     stream.getTracks().forEach(track => track.stop());
                 };
 
                 mediaRecorder.start();
                 isRecording = true;
-                sendMicBtn.classList.add('recording');
-                if (audioOverlay) audioOverlay.style.display = 'flex';
+                
+                // TRIGGER CSS ANIMATIONS
+                document.body.classList.add('is-recording');
+                
+                // Haptic feedback if available (Mobile only)
+                if (window.navigator.vibrate) window.navigator.vibrate(50);
 
             } catch (err) {
                 console.error("Error accessing microphone:", err);
-                alert("Could not access microphone. Please allow permissions.");
+                document.body.classList.remove('is-recording');
             }
         };
 
@@ -150,13 +153,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.stop();
                 isRecording = false;
+                if (window.navigator.vibrate) window.navigator.vibrate(30);
             }
         };
 
-        // --- Mouse/Touch Events for "Hold to Speak" ---
+        // --- INPUT EVENT HANDLERS ---
 
         const handleStart = (e) => {
-            // If user is typing, this button is just "Send", don't record
+            // If user has typed text, don't record, just let them click to send
             if (userInput.value.trim().length > 0) return;
 
             pressTimer = setTimeout(() => {
@@ -168,39 +172,41 @@ document.addEventListener('DOMContentLoaded', () => {
             clearTimeout(pressTimer);
             
             if (userInput.value.trim().length > 0) {
-                // It's a text send
+                // Text Send Logic
                 handleTextMessage();
                 return;
             }
 
             if (isRecording) {
-                // It was a hold, stop recording
+                // User was holding, now released -> Send Audio
                 stopRecording();
             } else {
-                // It was a short tap, but input was empty. Focus input or trigger generic action?
+                // User tapped quickly (no text, no record) -> Focus Input
                 userInput.focus();
             }
         };
 
-        // Touch
+        // Touch Events (Prioritize these for Mobile)
         sendMicBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Prevent mouse emulation
+            e.preventDefault(); 
             handleStart(e);
-        });
+        }, { passive: false });
+
         sendMicBtn.addEventListener('touchend', (e) => {
             e.preventDefault();
             handleEnd(e);
         });
 
-        // Mouse
+        // Mouse Events (Desktop Fallback)
         sendMicBtn.addEventListener('mousedown', handleStart);
         sendMicBtn.addEventListener('mouseup', handleEnd);
+        
+        // Safety: If finger slides off button
         sendMicBtn.addEventListener('mouseleave', () => {
             clearTimeout(pressTimer);
             if (isRecording) stopRecording();
         });
     }
-
     // Helper: Convert Blob to Base64
     function blobToBase64(blob) {
         return new Promise((resolve, reject) => {

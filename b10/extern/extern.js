@@ -3,7 +3,7 @@
 const WIKI_OUTPUT_COOLDOWN = 850;
 const WIKI_DATA_CACHE_LIFETIME = 6000000; 
 const MAX_IMAGES_PER_QUERY = 5;
-const GEMINI_API_KEY = "AIzaSyCnwoXIvQuCg6Q6-qv_Djyqt-7H0iADoCs"; 
+const GEMINI_API_KEY = "AIzaSyD2IbWsTb3DhzAsTNXJEJlbvV1o4LHHRGM"; 
 
 // ====================== STATE & CACHING ======================
 
@@ -288,4 +288,5 @@ function injectCarouselStyles() {
     .carousel-prev:hover, .carousel-next:hover { background: rgba(0, 0, 0, 0.9); } 
     `; 
     document.head.appendChild(style); 
+
 }

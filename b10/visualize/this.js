@@ -1,6 +1,6 @@
 // ====================== CONFIGURATION ======================
 // Using the same key provided in your main configuration
-const GEMINI_API_KEY = "AIzaSyAqciKc5qZ2z7YR9WT_4tY7grXdeJ7Z1ck"; 
+const GEMINI_API_KEY = "AIzaSyD2IbWsTb3DhzAsTNXJEJlbvV1o4LHHRGM"; 
 
 export default async function runCameraAI(args) {
     // 1. CLEANUP: Close existing viewers (3D or Camera)
@@ -269,4 +269,5 @@ function injectCameraStyles() {
         @keyframes blink { 0% {opacity:1} 50% {opacity:0.5} 100% {opacity:1} }
     `;
     document.head.appendChild(style);
+
 }

@@ -1,5 +1,5 @@
 // ====================== CONFIGURATION ======================
-const GEMINI_API_KEY = "AIzaSyAqciKc5qZ2z7YR9WT_4tY7grXdeJ7Z1ck"; 
+const GEMINI_API_KEY = "AIzaSyD2IbWsTb3DhzAsTNXJEJlbvV1o4LHHRGM"; 
 
 export default async function visualize(args = []) {
     // 1. Helper to safely get string from args
@@ -327,4 +327,5 @@ function injectStyles() {
         .viz-gemini-input:disabled { opacity: 0.6; cursor: wait; }
     `;
     document.head.appendChild(style);
+
 }

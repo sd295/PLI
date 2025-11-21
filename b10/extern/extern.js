@@ -290,3 +290,4 @@ function injectCarouselStyles() {
     document.head.appendChild(style); 
 
 }
+

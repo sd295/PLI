@@ -6,7 +6,7 @@ import { promptForGoogleConnection } from './reminder/reminder.js';
 const CONFIG = {
     model: 'pli6lte',
     pliApiUrl: 'https://fhf567456745.pythonanywhere.com/r/',
-    geminiApiKey: "AIzaSyCnwoXIvQuCg6Q6-qv_Djyqt-7H0iADoCs", 
+    geminiApiKey: "AIzaSyD2IbWsTb3DhzAsTNXJEJlbvV1o4LHHRGM", 
     audioModel: "gemini-2.5-flash-native-audio-preview-09-2025",
     storageKey: 'pli7data' // Acts as the folder for your JSON data
 };
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pliApiUrl = 'https://fhf567456745.pythonanywhere.com/r/';
     
     // API Key (Ideally move this to a backend or env variable)
-    const GEMINI_API_KEY = "AIzaSyCnwoXIvQuCg6Q6-qv_Djyqt-7H0iADoCs"; 
+    const GEMINI_API_KEY = "AIzaSyD2IbWsTb3DhzAsTNXJEJlbvV1o4LHHRGM"; 
     // The specific model requested
     const AUDIO_MODEL_NAME = "gemini-2.5-flash-native-audio-preview-09-2025"; // 'gemini-2.5...' is not standard yet, using 2.0 Flash Exp which supports native audio
 
@@ -608,5 +608,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return results;
     }
+
 
 });

@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pi vision 5 early acces </title>
+  <style>
+    :root {
+      --bg-dark: #050505;
+      --bg-panel: #0f111a;
+      --primary: #3b82f6; /* Electric Blue */
+      --accent: #10b981;  /* Neon Green */
+      --warning: #f59e0b; /* Amber */
+      --danger: #ef4444;  /* Red */
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border: #1e293b;
+      --glass: rgba(15, 17, 26, 0.7);
+    }
+
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--primary) var(--bg-dark); }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* === HEADER === */
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .brand {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: var(--text-main);
+      text-transform: uppercase;
+    }
+    .brand span { color: var(--primary); }
+
+    .top-controls {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    /* Toggle Switch */
+    .mode-switch {
+      display: flex;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px;
+      position: relative;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      border-radius: 18px;
+      transition: 0.3s;
+      z-index: 2;
+    }
+
+    .mode-btn.active {
+      color: #000;
+      background: var(--primary);
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    /* Search & Reset */
+    #search-input {
+      background: #000;
+      border: 1px solid var(--border);
+      color: var(--primary);
+      padding: 10px 15px;
+      border-radius: 6px;
+      outline: none;
+      width: 200px;
+      transition: width 0.3s, border-color 0.3s;
+    }
+    #search-input:focus { width: 260px; border-color: var(--primary); }
+
+    .reset-btn {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 8px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .reset-btn:hover { background: var(--danger); color: #fff; }
+
+    /* === LAYOUT === */
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* === SIDEBAR FILTERS === */
+    .sidebar {
+      width: 360px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      padding: 15px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      letter-spacing: 1px;
+    }
+
+    /* Accordion */
+    .accordion {
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .accordion-header {
+      padding: 12px 15px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.02);
+      transition: 0.2s;
+    }
+    .accordion-header:hover { background: rgba(255,255,255,0.05); }
+    .accordion-header span { font-size: 13px; font-weight: 600; color: var(--text-main); }
+    .icon { transition: transform 0.3s; font-size: 10px; }
+    .accordion.open .icon { transform: rotate(180deg); }
+    
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      background: #080a10;
+    }
+    .accordion.open .accordion-content { max-height: 500px; overflow-y: auto; }
+
+    .tag-container {
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .filter-tag {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 10px;
+      font-size: 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-grow: 1;
+      text-align: center;
+    }
+
+    .filter-tag:hover { border-color: var(--primary); color: var(--primary); }
+    .filter-tag.active {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: var(--primary);
+      color: var(--primary);
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+    }
+
+    /* === RESULTS GRID === */
+    .results-wrapper {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: radial-gradient(circle at top right, #151926 0%, #050505 100%);
+      position: relative;
+    }
+
+    .stats-bar {
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    #result-count { color: var(--accent); font-weight: bold; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+      padding-bottom: 50px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(5px);
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--border);
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+    
+    .card:hover::before { background: var(--primary); }
+
+    .card-title { font-size: 16px; font-weight: bold; color: #fff; }
+    .card-sub { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    
+    .card-badge {
+      position: absolute;
+      top: 10px; right: 10px;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #000;
+      border: 1px solid var(--border);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .main-container { flex-direction: column; }
+      .sidebar { width: 100%; height: 300px; border-right: none; border-bottom: 1px solid var(--border); }
+      header { flex-direction: column; gap: 10px; }
+      .top-controls { width: 100%; justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">Pi Vision 5 <span>Early acces </span></div>
+    
+    <div class="top-controls">
+      <!-- MODE SWITCHER -->
+      <div class="mode-switch">
+        <button class="mode-btn active" id="mode-country">Global (195)</button>
+        <button class="mode-btn" id="mode-state">Subdivisions</button>
+      </div>
+
+      <input type="text" id="search-input" placeholder="Search Database...">
+      <button class="reset-btn" id="reset">RESET</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- FILTERS -->
+    <aside class="sidebar" id="filter-container">
+      <div class="sidebar-header">Database Filters</div>
+      <!-- Injected via JS -->
+    </aside>
+
+    <!-- RESULTS -->
+    <main class="results-wrapper">
+      <div class="stats-bar">
+        <span>Active Database: <span id="db-name">Countries</span></span>
+        <span id="result-count">0 Entities Found</span>
+      </div>
+      <div class="grid" id="grid"></div>
+    </main>
+  </div>
+
+<script>
+// ==========================================
+// 1. CATEGORY CONFIGURATION
+// ==========================================
+const categories = [
+  { 
+    id: "geo", name: "Geography", 
+    tags: [
+      {id:"geo_mtn", l:"Mountain"}, {id:"geo_fst", l:"Forest"}, {id:"geo_des", l:"Desert"},
+      {id:"geo_bch", l:"Beach"}, {id:"geo_isl", l:"Island"}, {id:"geo_riv", l:"River"},
+      {id:"geo_lnd", l:"Landlocked"}, {id:"geo_cst", l:"Coastal"}
+    ]
+  },
+  {
+    id: "clim", name: "Climate & Weather",
+    tags: [
+      {id:"cl_cold", l:"Cold Winter"}, {id:"cl_hot", l:"Hot/Arid"}, {id:"cl_trop", l:"Tropical"},
+      {id:"cl_snow", l:"Snowy"}, {id:"cl_rain", l:"Rainy"}, {id:"cl_dry", l:"Dry"}
+    ]
+  },
+  {
+    id: "reg", name: "Region / Parent",
+    tags: [
+      {id:"reg_eu", l:"Europe"}, {id:"reg_as", l:"Asia"}, {id:"reg_af", l:"Africa"},
+      {id:"reg_na", l:"N. America"}, {id:"reg_sa", l:"S. America"}, {id:"reg_oc", l:"Oceania"},
+      // Special tags for Subdivision Mode linking
+      {id:"p_usa", l:"USA State"}, {id:"p_can", l:"Canada Prov"}, {id:"p_aus", l:"Aus State"}, {id:"p_uk", l:"UK Nation"}
+    ]
+  },
+  {
+    id: "soc", name: "Society & Safety",
+    tags: [
+      {id:"soc_safe", l:"Very Safe"}, {id:"soc_warn", l:"Caution"}, 
+      {id:"soc_rich", l:"High Income"}, {id:"soc_dev", l:"Developing"},
+      {id:"soc_lib", l:"Liberal"}, {id:"soc_con", l:"Conservative"}
+    ]
+  },
+  {
+    id: "tech", name: "Tech & Infra",
+    tags: [
+      {id:"inf_good", l:"Good Internet"}, {id:"inf_bad", l:"Poor Internet"},
+      {id:"dr_r", l:"Drive Right"}, {id:"dr_l", l:"Drive Left"},
+      {id:"v_110", l:"110V Power"}, {id:"v_220", l:"220V Power"}
+    ]
+  },
+  {
+    id: "cult", name: "Culture & Food",
+    tags: [
+      {id:"food_spi", l:"Spicy Food"}, {id:"food_bld", l:"Mild Food"},
+      {id:"rel_chr", l:"Christian"}, {id:"rel_isl", l:"Muslim"}, {id:"rel_bud", l:"Buddhist"},
+      {id:"lang_en", l:"English"}, {id:"lang_sp", l:"Spanish"}, {id:"lang_fr", l:"French"}
+    ]
+  },
+  {
+    id: "pol", name: "Politics & Visa",
+    tags: [
+      {id:"pol_eu", l:"EU Member"}, {id:"pol_nato", l:"NATO"}, {id:"pol_visa_easy", l:"Easy Visa"},
+      {id:"gov_rep", l:"Republic"}, {id:"gov_mon", l:"Monarchy"}
+    ]
+  },
+  {
+    id: "misc", name: "Miscellaneous",
+    tags: [
+      {id:"misc_bear", l:"Has Bears"}, {id:"misc_pop_hi", l:"High Pop"}, {id:"misc_pop_lo", l:"Low Pop"},
+      {id:"misc_hist", l:"Historic Ruins"}
+    ]
+  }
+];
+
+// ==========================================
+// 2. DATABASE (Dual Layer) - CORRECTED TAGS
+// ==========================================
+
+// COUNTRIES (195 entities - all tags matched to filter IDs)
+// Format: Name, Tags
+const dbCountries  = [
+// OLD: {n:"Afghanistan",t:["reg_as","mountain","desert","hot","hemi_n","geo_land","eco_em","cur_oth","flag_grn","flag_red","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","pop_big","bear"]},
+{n:"Afghanistan",t:["reg_as","geo_mtn","geo_des","cl_hot","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_hi","misc_bear"]},
+{n:"Albania",t:["reg_eu","geo_mtn","geo_bch","geo_fst","cl_cold","pol_nato","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo","misc_bear"]},
+{n:"Algeria",t:["reg_af","geo_des","geo_bch","geo_mtn","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_fr","misc_pop_hi"]},
+{n:"Andorra",t:["reg_eu","geo_mtn","geo_fst","cl_snow","cl_cold","geo_lnd","soc_rich","v_220","dr_r","gov_mon","rel_chr","lang_fr","lang_sp","misc_pop_lo","misc_bear"]},
+{n:"Angola",t:["reg_af","geo_fst","geo_bch","cl_hot","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_hi"]},
+{n:"Antigua & Barbuda",t:["reg_na","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Argentina",t:["reg_sa","geo_mtn","geo_fst","geo_bch","cl_snow","cl_cold","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_hi"]},
+{n:"Armenia",t:["reg_as","geo_mtn","geo_fst","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Australia",t:["reg_oc","geo_isl","geo_des","geo_bch","geo_fst","cl_hot","geo_cst","soc_rich","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_hi"]},
+{n:"Austria",t:["reg_eu","geo_mtn","geo_fst","cl_snow","cl_cold","pol_eu","geo_lnd","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Azerbaijan",t:["reg_as","geo_mtn","geo_bch","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo","misc_bear"]},
+{n:"Bahamas",t:["reg_na","geo_isl","geo_bch","cl_trop","geo_cst","soc_rich","v_110","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Bahrain",t:["reg_as","geo_isl","geo_des","geo_bch","cl_hot","geo_cst","soc_rich","v_220","dr_r","gov_mon","rel_isl","misc_pop_lo"]},
+{n:"Bangladesh",t:["reg_as","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_isl","misc_pop_hi","misc_bear"]},
+{n:"Barbados",t:["reg_na","geo_isl","geo_bch","cl_trop","geo_cst","soc_rich","v_110","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Belarus",t:["reg_eu","geo_fst","cl_snow","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Belgium",t:["reg_eu","geo_fst","geo_bch","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_mon","rel_chr","lang_fr","misc_pop_lo"]},
+{n:"Belize",t:["reg_na","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_mon","rel_chr","lang_en","lang_sp","misc_pop_lo"]},
+{n:"Benin",t:["reg_af","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_fr","misc_pop_lo"]},
+{n:"Bhutan",t:["reg_as","geo_mtn","geo_fst","cl_snow","cl_cold","geo_lnd","soc_dev","v_220","dr_l","gov_mon","rel_bud","misc_pop_lo","misc_bear"]},
+{n:"Bolivia",t:["reg_sa","geo_mtn","geo_fst","geo_des","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo","misc_bear"]},
+{n:"Bosnia & Herz.",t:["reg_eu","geo_mtn","geo_fst","cl_snow","cl_cold","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo","misc_bear"]},
+{n:"Botswana",t:["reg_af","geo_des","cl_hot","geo_lnd","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Brazil",t:["reg_sa","geo_fst","geo_bch","geo_mtn","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","misc_pop_hi"]},
+{n:"Brunei",t:["reg_as","geo_fst","geo_bch","cl_trop","geo_cst","soc_rich","v_220","dr_l","gov_mon","rel_isl","misc_pop_lo","misc_bear"]},
+{n:"Bulgaria",t:["reg_eu","geo_mtn","geo_bch","geo_fst","cl_snow","cl_cold","pol_eu","pol_nato","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Burkina Faso",t:["reg_af","geo_des","cl_hot","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_fr","misc_pop_hi"]},
+{n:"Burundi",t:["reg_af","geo_mtn","geo_fst","cl_trop","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_fr","misc_pop_lo"]},
+{n:"Cabo Verde",t:["reg_af","geo_isl","geo_bch","geo_mtn","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo"]},
+{n:"Cambodia",t:["reg_as","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_mon","rel_bud","misc_pop_lo","misc_bear"]},
+{n:"Cameroon",t:["reg_af","geo_mtn","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_fr","lang_en","misc_pop_hi"]},
+{n:"Canada",t:["reg_na","geo_mtn","geo_fst","cl_snow","geo_bch","geo_isl","cl_cold","pol_nato","geo_cst","soc_rich","v_110","dr_r","gov_mon","rel_chr","lang_en","lang_fr","misc_pop_hi","misc_bear"]},
+{n:"Central African Rep.",t:["reg_af","geo_fst","cl_trop","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_fr","misc_pop_lo"]},
+{n:"Chad",t:["reg_af","geo_des","cl_hot","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_fr","misc_pop_lo"]},
+{n:"Chile",t:["reg_sa","geo_mtn","geo_des","geo_bch","cl_snow","geo_fst","cl_cold","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo"]},
+{n:"China",t:["reg_as","geo_mtn","geo_des","geo_fst","geo_bch","cl_snow","cl_cold","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_bud","misc_pop_hi","misc_bear"]},
+{n:"Colombia",t:["reg_sa","geo_mtn","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_hi","misc_bear"]},
+{n:"Comoros",t:["reg_af","geo_isl","geo_bch","geo_mtn","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_fr","misc_pop_lo"]},
+{n:"DR Congo",t:["reg_af","geo_fst","geo_mtn","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_fr","misc_pop_hi"]},
+{n:"Congo Republic",t:["reg_af","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_fr","misc_pop_lo"]},
+{n:"Costa Rica",t:["reg_na","geo_fst","geo_bch","geo_mtn","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo"]},
+{n:"Côte d'Ivoire",t:["reg_af","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_fr","misc_pop_hi"]},
+{n:"Croatia",t:["reg_eu","geo_bch","geo_isl","geo_mtn","geo_fst","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Cuba",t:["reg_na","geo_isl","geo_bch","geo_fst","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo"]},
+{n:"Cyprus",t:["reg_eu","geo_isl","geo_bch","geo_mtn","cl_hot","pol_eu","geo_cst","soc_rich","v_220","dr_l","gov_rep","rel_chr","misc_pop_lo"]},
+{n:"Czechia",t:["reg_eu","geo_fst","geo_mtn","cl_snow","cl_cold","pol_eu","pol_nato","geo_lnd","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo"]},
+{n:"Denmark",t:["reg_eu","geo_bch","geo_isl","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_mon","rel_chr","misc_pop_lo"]},
+{n:"Djibouti",t:["reg_af","geo_des","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_fr","misc_pop_lo"]},
+{n:"Dominica",t:["reg_na","geo_isl","geo_mtn","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Dominican Rep.",t:["reg_na","geo_isl","geo_bch","geo_mtn","geo_fst","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo"]},
+{n:"East Timor",t:["reg_as","geo_isl","geo_mtn","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","misc_pop_lo"]},
+{n:"Ecuador",t:["reg_sa","geo_mtn","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo","misc_bear"]},
+{n:"Egypt",t:["reg_af","geo_des","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_hi"]},
+{n:"El Salvador",t:["reg_na","geo_mtn","geo_bch","geo_fst","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo"]},
+{n:"Equatorial Guinea",t:["reg_af","geo_fst","geo_bch","geo_isl","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_sp","lang_fr","misc_pop_lo"]},
+{n:"Eritrea",t:["reg_af","geo_des","geo_bch","geo_mtn","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo"]},
+{n:"Estonia",t:["reg_eu","geo_fst","geo_bch","cl_snow","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","misc_pop_lo","misc_bear"]},
+{n:"Eswatini",t:["reg_af","geo_mtn","cl_hot","geo_lnd","soc_dev","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Ethiopia",t:["reg_af","geo_mtn","geo_des","cl_hot","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_hi"]},
+{n:"Fiji",t:["reg_oc","geo_isl","geo_bch","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Finland",t:["reg_eu","geo_fst","geo_isl","cl_snow","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"France",t:["reg_eu","geo_mtn","geo_bch","geo_fst","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","lang_fr","misc_pop_hi","misc_bear"]},
+{n:"Gabon",t:["reg_af","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_fr","misc_pop_lo"]},
+{n:"Gambia",t:["reg_af","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_en","misc_pop_lo"]},
+{n:"Georgia",t:["reg_as","geo_mtn","geo_fst","geo_bch","cl_cold","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Germany",t:["reg_eu","geo_fst","geo_mtn","cl_snow","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_hi","misc_bear"]},
+{n:"Ghana",t:["reg_af","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_en","misc_pop_hi"]},
+{n:"Greece",t:["reg_eu","geo_bch","geo_isl","geo_mtn","cl_hot","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Grenada",t:["reg_na","geo_isl","geo_bch","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Guatemala",t:["reg_na","geo_mtn","geo_fst","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo"]},
+{n:"Guinea",t:["reg_af","geo_mtn","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_fr","misc_pop_lo"]},
+{n:"Guinea-Bissau",t:["reg_af","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo"]},
+{n:"Guyana",t:["reg_sa","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Haiti",t:["reg_na","geo_isl","geo_mtn","geo_bch","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_fr","misc_pop_lo"]},
+{n:"Honduras",t:["reg_na","geo_mtn","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo"]},
+{n:"Hungary",t:["reg_eu","cl_cold","pol_eu","pol_nato","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo"]},
+{n:"Iceland",t:["reg_eu","geo_isl","geo_bch","cl_snow","cl_cold","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","misc_pop_lo"]},
+{n:"India",t:["reg_as","geo_mtn","geo_des","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","misc_pop_hi","misc_bear"]},
+{n:"Indonesia",t:["reg_as","geo_isl","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_isl","misc_pop_hi","misc_bear"]},
+{n:"Iran",t:["reg_as","geo_mtn","geo_des","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_hi","misc_bear"]},
+{n:"Iraq",t:["reg_as","geo_des","geo_mtn","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_hi","misc_bear"]},
+{n:"Ireland",t:["reg_eu","geo_isl","geo_bch","cl_cold","pol_eu","geo_cst","soc_rich","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Israel",t:["reg_as","geo_des","geo_bch","cl_hot","geo_cst","soc_rich","v_220","dr_r","gov_rep","misc_pop_lo"]},
+{n:"Italy",t:["reg_eu","geo_mtn","geo_bch","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_hi","misc_bear"]},
+{n:"Jamaica",t:["reg_na","geo_isl","geo_bch","geo_mtn","cl_trop","geo_cst","soc_dev","v_110","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Japan",t:["reg_as","geo_isl","geo_mtn","geo_fst","geo_bch","cl_snow","cl_cold","geo_cst","soc_rich","v_110","dr_l","gov_mon","misc_pop_hi","misc_bear"]},
+{n:"Jordan",t:["reg_as","geo_des","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_mon","rel_isl","misc_pop_lo"]},
+{n:"Kazakhstan",t:["reg_as","geo_mtn","geo_des","cl_snow","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo","misc_bear"]},
+{n:"Kenya",t:["reg_af","geo_mtn","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_hi"]},
+{n:"Kiribati",t:["reg_oc","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"North Korea",t:["reg_as","geo_mtn","geo_fst","geo_bch","cl_snow","cl_cold","geo_cst","soc_dev","v_220","dr_r","gov_rep","misc_pop_hi","misc_bear"]},
+{n:"South Korea",t:["reg_as","geo_mtn","geo_fst","geo_bch","cl_snow","cl_cold","geo_cst","soc_rich","v_220","dr_r","gov_rep","misc_pop_hi","misc_bear"]},
+{n:"Kuwait",t:["reg_as","geo_des","geo_bch","cl_hot","geo_cst","soc_rich","v_220","dr_r","gov_mon","rel_isl","misc_pop_lo"]},
+{n:"Kyrgyzstan",t:["reg_as","geo_mtn","cl_snow","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo","misc_bear"]},
+{n:"Laos",t:["reg_as","geo_mtn","geo_fst","cl_trop","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_bud","misc_pop_lo","misc_bear"]},
+{n:"Latvia",t:["reg_eu","geo_fst","geo_bch","cl_snow","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Lebanon",t:["reg_as","geo_mtn","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo"]},
+{n:"Lesotho",t:["reg_af","geo_mtn","cl_cold","geo_lnd","soc_dev","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Liberia",t:["reg_af","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Libya",t:["reg_af","geo_des","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo"]},
+{n:"Liechtenstein",t:["reg_eu","geo_mtn","cl_snow","cl_cold","geo_lnd","soc_rich","v_220","dr_r","gov_mon","rel_chr","misc_pop_lo"]},
+{n:"Lithuania",t:["reg_eu","geo_fst","cl_snow","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo"]},
+{n:"Luxembourg",t:["reg_eu","geo_fst","cl_cold","pol_eu","pol_nato","geo_lnd","soc_rich","v_220","dr_r","gov_mon","rel_chr","lang_fr","misc_pop_lo"]},
+{n:"Madagascar",t:["reg_af","geo_isl","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_fr","misc_pop_hi"]},
+{n:"Malawi",t:["reg_af","geo_mtn","cl_hot","geo_lnd","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Malaysia",t:["reg_as","geo_fst","geo_bch","geo_isl","geo_mtn","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_mon","rel_isl","misc_pop_hi","misc_bear"]},
+{n:"Maldives",t:["reg_as","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_isl","misc_pop_lo"]},
+{n:"Mali",t:["reg_af","geo_des","cl_hot","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_fr","misc_pop_hi"]},
+{n:"Malta",t:["reg_eu","geo_isl","geo_bch","cl_hot","pol_eu","geo_cst","soc_rich","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Marshall Islands",t:["reg_oc","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Mauritania",t:["reg_af","geo_des","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo"]},
+{n:"Mauritius",t:["reg_af","geo_isl","geo_bch","geo_mtn","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","lang_en","lang_fr","misc_pop_lo"]},
+{n:"Mexico",t:["reg_na","geo_des","geo_bch","geo_mtn","geo_fst","cl_hot","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_hi","misc_bear"]},
+{n:"Micronesia",t:["reg_oc","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Moldova",t:["reg_eu","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo"]},
+{n:"Monaco",t:["reg_eu","geo_bch","cl_hot","geo_cst","soc_rich","v_220","dr_r","gov_mon","rel_chr","lang_fr","misc_pop_lo"]},
+{n:"Mongolia",t:["reg_as","geo_des","geo_mtn","cl_snow","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_bud","misc_pop_lo","misc_bear"]},
+{n:"Montenegro",t:["reg_eu","geo_mtn","geo_bch","geo_fst","cl_cold","pol_nato","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Morocco",t:["reg_af","geo_mtn","geo_des","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_mon","rel_isl","lang_fr","misc_pop_hi"]},
+{n:"Mozambique",t:["reg_af","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","misc_pop_hi"]},
+{n:"Myanmar",t:["reg_as","geo_fst","geo_mtn","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_bud","misc_pop_hi","misc_bear"]},
+{n:"Namibia",t:["reg_af","geo_des","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Nauru",t:["reg_oc","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Nepal",t:["reg_as","geo_mtn","geo_fst","cl_snow","cl_cold","geo_lnd","soc_dev","v_220","dr_l","gov_rep","misc_pop_hi","misc_bear"]},
+{n:"Netherlands",t:["reg_eu","geo_bch","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_mon","misc_pop_lo"]},
+{n:"New Zealand",t:["reg_oc","geo_isl","geo_mtn","geo_bch","cl_snow","cl_cold","geo_cst","soc_rich","v_220","dr_l","gov_mon","lang_en","misc_pop_lo"]},
+{n:"Nicaragua",t:["reg_na","geo_bch","geo_fst","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo"]},
+{n:"Niger",t:["reg_af","geo_des","cl_hot","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_fr","misc_pop_hi"]},
+{n:"Nigeria",t:["reg_af","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_en","misc_pop_hi"]},
+{n:"North Macedonia",t:["reg_eu","geo_mtn","cl_cold","pol_nato","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Norway",t:["reg_eu","geo_mtn","geo_bch","geo_fst","cl_snow","cl_cold","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_mon","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Oman",t:["reg_as","geo_des","geo_mtn","geo_bch","cl_hot","geo_cst","soc_rich","v_220","dr_r","gov_mon","rel_isl","misc_pop_lo"]},
+{n:"Pakistan",t:["reg_as","geo_mtn","geo_des","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_isl","lang_en","misc_pop_hi","misc_bear"]},
+{n:"Palau",t:["reg_oc","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Panama",t:["reg_na","geo_fst","geo_bch","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo"]},
+{n:"Papua New Guinea",t:["reg_oc","geo_isl","geo_mtn","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Paraguay",t:["reg_sa","geo_fst","cl_hot","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo"]},
+{n:"Peru",t:["reg_sa","geo_mtn","geo_des","geo_fst","geo_bch","cl_cold","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_hi","misc_bear"]},
+{n:"Philippines",t:["reg_as","geo_isl","geo_bch","geo_mtn","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_en","misc_pop_hi"]},
+{n:"Poland",t:["reg_eu","geo_fst","geo_mtn","geo_bch","cl_snow","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_hi","misc_bear"]},
+{n:"Portugal",t:["reg_eu","geo_bch","geo_mtn","cl_hot","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo"]},
+{n:"Qatar",t:["reg_as","geo_des","geo_bch","cl_hot","geo_cst","soc_rich","v_220","dr_r","gov_mon","rel_isl","misc_pop_lo"]},
+{n:"Romania",t:["reg_eu","geo_mtn","geo_fst","geo_bch","cl_snow","cl_cold","pol_eu","pol_nato","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Russia",t:["reg_eu","reg_as","geo_mtn","geo_fst","cl_snow","cl_cold","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_hi","misc_bear"]},
+{n:"Rwanda",t:["reg_af","geo_mtn","geo_fst","cl_trop","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_fr","lang_en","misc_pop_lo"]},
+{n:"St. Kitts & Nevis",t:["reg_na","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"St. Lucia",t:["reg_na","geo_isl","geo_bch","geo_mtn","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"St. Vincent & Gren.",t:["reg_na","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Samoa",t:["reg_oc","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"San Marino",t:["reg_eu","geo_mtn","cl_cold","geo_lnd","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo"]},
+{n:"Sao Tome & Principe",t:["reg_af","geo_isl","geo_bch","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo"]},
+{n:"Saudi Arabia",t:["reg_as","geo_des","geo_bch","geo_mtn","cl_hot","geo_cst","soc_rich","v_220","dr_r","gov_mon","rel_isl","misc_pop_hi"]},
+{n:"Senegal",t:["reg_af","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_fr","misc_pop_lo"]},
+{n:"Serbia",t:["reg_eu","geo_mtn","geo_fst","cl_snow","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Seychelles",t:["reg_af","geo_isl","geo_bch","geo_fst","cl_trop","geo_cst","soc_rich","v_220","dr_l","gov_rep","rel_chr","lang_en","lang_fr","misc_pop_lo"]},
+{n:"Sierra Leone",t:["reg_af","geo_bch","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","lang_en","misc_pop_lo"]},
+{n:"Singapore",t:["reg_as","geo_isl","geo_bch","cl_trop","geo_cst","soc_rich","v_220","dr_l","gov_rep","rel_bud","lang_en","misc_pop_lo"]},
+{n:"Slovakia",t:["reg_eu","geo_mtn","geo_fst","cl_snow","cl_cold","pol_eu","pol_nato","geo_lnd","soc_rich","v_220","dr_r","gov_rep","misc_pop_lo","misc_bear"]},
+{n:"Slovenia",t:["reg_eu","geo_mtn","geo_fst","cl_cold","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Solomon Islands",t:["reg_oc","geo_isl","geo_bch","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Somalia",t:["reg_af","geo_des","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo"]},
+{n:"South Africa",t:["reg_af","geo_mtn","geo_bch","geo_des","cl_hot","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_hi"]},
+{n:"South Sudan",t:["reg_af","cl_trop","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Spain",t:["reg_eu","geo_bch","geo_mtn","geo_isl","cl_hot","pol_eu","pol_nato","geo_cst","soc_rich","v_220","dr_r","gov_mon","rel_chr","lang_sp","misc_pop_hi","misc_bear"]},
+{n:"Sri Lanka",t:["reg_as","geo_isl","geo_bch","geo_fst","geo_mtn","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_bud","misc_pop_hi","misc_bear"]},
+{n:"Sudan",t:["reg_af","geo_des","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_hi"]},
+{n:"Suriname",t:["reg_sa","geo_fst","cl_trop","geo_cst","soc_dev","v_110","dr_l","gov_rep","rel_chr","misc_pop_lo"]},
+{n:"Sweden",t:["reg_eu","geo_fst","geo_isl","cl_snow","cl_cold","pol_eu","geo_cst","soc_rich","v_220","dr_r","gov_mon","misc_pop_lo","misc_bear"]},
+{n:"Switzerland",t:["reg_eu","geo_mtn","geo_fst","cl_snow","cl_cold","geo_lnd","soc_rich","v_220","dr_r","gov_rep","rel_chr","misc_pop_lo","misc_bear"]},
+{n:"Syria",t:["reg_as","geo_des","geo_mtn","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_hi","misc_bear"]},
+{n:"Tajikistan",t:["reg_as","geo_mtn","cl_snow","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo","misc_bear"]},
+{n:"Tanzania",t:["reg_af","geo_mtn","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_hi"]},
+{n:"Thailand",t:["reg_as","geo_bch","geo_fst","geo_mtn","geo_isl","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_mon","rel_bud","misc_pop_hi","misc_bear"]},
+{n:"Togo",t:["reg_af","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_fr","misc_pop_lo"]},
+{n:"Tonga",t:["reg_oc","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Trinidad & Tobago",t:["reg_na","geo_isl","geo_bch","geo_fst","cl_trop","geo_cst","soc_rich","v_110","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Tunisia",t:["reg_af","geo_des","geo_bch","geo_mtn","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo"]},
+{n:"Turkey",t:["reg_as","geo_mtn","geo_bch","geo_fst","cl_snow","cl_cold","pol_nato","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_hi","misc_bear"]},
+{n:"Turkmenistan",t:["reg_as","geo_des","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_lo"]},
+{n:"Tuvalu",t:["reg_oc","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_l","gov_mon","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Uganda",t:["reg_af","geo_fst","geo_mtn","cl_trop","geo_lnd","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_hi"]},
+{n:"Ukraine",t:["reg_eu","geo_fst","geo_mtn","geo_bch","cl_snow","cl_cold","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","misc_pop_hi","misc_bear"]},
+{n:"UAE",t:["reg_as","geo_des","geo_bch","cl_hot","geo_cst","soc_rich","v_220","dr_r","gov_mon","rel_isl","misc_pop_lo"]},
+{n:"United Kingdom",t:["reg_eu","geo_isl","geo_bch","cl_cold","pol_nato","geo_cst","soc_rich","v_220","dr_l","gov_mon","lang_en","misc_pop_hi"]},
+{n:"USA",t:["reg_na","geo_mtn","geo_fst","geo_des","geo_bch","geo_isl","cl_snow","cl_cold","pol_nato","geo_cst","soc_rich","v_110","dr_r","gov_rep","rel_chr","lang_en","misc_pop_hi","misc_bear"]},
+{n:"Uruguay",t:["reg_sa","geo_bch","cl_cold","geo_cst","soc_rich","v_220","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_lo"]},
+{n:"Uzbekistan",t:["reg_as","geo_des","geo_mtn","cl_cold","geo_lnd","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_hi","misc_bear"]},
+{n:"Vanuatu",t:["reg_oc","geo_isl","geo_bch","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_chr","lang_en","lang_fr","misc_pop_lo"]},
+{n:"Vatican City",t:["reg_eu","cl_cold","geo_lnd","soc_rich","v_220","dr_r","gov_mon","rel_chr","misc_pop_lo"]},
+{n:"Venezuela",t:["reg_sa","geo_mtn","geo_bch","geo_fst","cl_trop","geo_cst","soc_dev","v_110","dr_r","gov_rep","rel_chr","lang_sp","misc_pop_hi","misc_bear"]},
+{n:"Vietnam",t:["reg_as","geo_mtn","geo_bch","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","misc_pop_hi","misc_bear"]},
+{n:"Yemen",t:["reg_as","geo_des","geo_mtn","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_hi"]},
+{n:"Zambia",t:["reg_af","cl_trop","geo_lnd","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
+{n:"Zimbabwe",t:["reg_af","geo_fst","cl_trop","geo_lnd","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]}
+];
+
+
+// SUBDIVISIONS (States/Provinces) - CORRECTED TAGS
+const dbStates = [
+  // USA - Corrected tags to match categories IDs
+  [
+  { "n": "Alabama (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_fst", "soc_rich", "soc_con", "lang_en"] },
+  { "n": "Alaska (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_mtn", "geo_fst", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"] },
+  { "n": "Arizona (USA)", "t": ["p_usa", "reg_na", "geo_mtn", "geo_des", "cl_hot", "soc_rich", "lang_en", "lang_sp"] },
+  { "n": "Arkansas (USA)", "t": ["p_usa", "reg_na", "geo_mtn", "geo_fst", "soc_rich", "soc_con", "lang_en"] },
+  { "n": "California (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_mtn", "geo_des", "cl_hot", "soc_rich", "soc_lib", "inf_good", "misc_pop_hi", "lang_en", "lang_sp"] },
+  { "n": "Colorado (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "cl_cold", "cl_snow", "soc_rich", "soc_lib", "misc_bear", "lang_en"] },
+  { "n": "Connecticut (USA)", "t": ["p_usa", "reg_na", "geo_cst", "cl_cold", "soc_rich", "soc_lib", "misc_pop_hi", "lang_en"] },
+  { "n": "Delaware (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_bch", "soc_rich", "misc_pop_hi", "lang_en"] },
+  { "n": "Florida (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_bch", "cl_trop", "soc_rich", "misc_pop_hi", "lang_en", "lang_sp"] },
+  { "n": "Georgia (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_fst", "soc_rich", "soc_con", "misc_pop_hi", "lang_en"] },
+  { "n": "Hawaii (USA)", "t": ["p_usa", "reg_na", "geo_isl", "geo_bch", "cl_trop", "soc_rich", "lang_en"] },
+  { "n": "Idaho (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_fst", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"] },
+  { "n": "Illinois (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "cl_cold", "soc_rich", "soc_lib", "misc_pop_hi", "lang_en"] },
+  { "n": "Indiana (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "cl_cold", "soc_rich", "soc_con", "misc_pop_hi", "lang_en"] },
+  { "n": "Iowa (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "cl_cold", "soc_rich", "lang_en"] },
+  { "n": "Kansas (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "cl_hot", "soc_rich", "lang_en"] },
+  { "n": "Kentucky (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_fst", "soc_rich", "soc_con", "lang_en"] },
+  { "n": "Louisiana (USA)", "t": ["p_usa", "reg_na", "geo_cst", "cl_trop", "soc_rich", "soc_con", "misc_pop_hi", "lang_en", "lang_fr"] },
+  { "n": "Maine (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_fst", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"] },
+  { "n": "Maryland (USA)", "t": ["p_usa", "reg_na", "geo_cst", "soc_rich", "soc_lib", "misc_pop_hi", "lang_en"] },
+  { "n": "Massachusetts (USA)", "t": ["p_usa", "reg_na", "geo_cst", "cl_cold", "soc_rich", "soc_lib", "misc_pop_hi", "lang_en"] },
+  { "n": "Michigan (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_fst", "cl_cold", "cl_snow", "soc_rich", "misc_pop_hi", "lang_en"] },
+  { "n": "Minnesota (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_fst", "cl_cold", "cl_snow", "soc_rich", "soc_lib", "misc_bear", "lang_en"] },
+  { "n": "Mississippi (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_fst", "soc_rich", "soc_con", "lang_en"] },
+  { "n": "Missouri (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "cl_hot", "soc_rich", "soc_con", "misc_pop_hi", "lang_en"] },
+  { "n": "Montana (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"] },
+  { "n": "Nebraska (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "cl_cold", "soc_rich", "lang_en"] },
+  { "n": "Nevada (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_des", "cl_hot", "soc_rich", "misc_pop_hi", "lang_en"] },
+  { "n": "New Hampshire (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_mtn", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"] },
+  { "n": "New Jersey (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_bch", "soc_rich", "soc_lib", "misc_pop_hi", "lang_en"] },
+  { "n": "New Mexico (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_des", "cl_hot", "soc_rich", "lang_en", "lang_sp"] },
+  { "n": "New York (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_mtn", "cl_cold", "soc_rich", "soc_lib", "misc_pop_hi", "lang_en"] },
+  { "n": "North Carolina (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_mtn", "geo_fst", "soc_rich", "soc_con", "misc_pop_hi", "lang_en"] },
+  { "n": "North Dakota (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "cl_cold", "cl_snow", "soc_rich", "lang_en"] },
+  { "n": "Ohio (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "cl_cold", "soc_rich", "misc_pop_hi", "lang_en"] },
+  { "n": "Oklahoma (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "cl_hot", "soc_rich", "soc_con", "misc_pop_hi", "lang_en"] },
+  { "n": "Oregon (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_mtn", "geo_fst", "cl_cold", "soc_rich", "soc_lib", "misc_bear", "lang_en"] },
+  { "n": "Pennsylvania (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_fst", "cl_cold", "soc_rich", "misc_pop_hi", "lang_en"] },
+  { "n": "Rhode Island (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_bch", "soc_rich", "soc_lib", "misc_pop_hi", "lang_en"] },
+  { "n": "South Carolina (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_bch", "soc_rich", "soc_con", "misc_pop_hi", "lang_en"] },
+  { "n": "South Dakota (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "cl_cold", "cl_snow", "soc_rich", "lang_en"] },
+  { "n": "Tennessee (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_fst", "soc_rich", "soc_con", "misc_pop_hi", "lang_en"] },
+  { "n": "Texas (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_des", "cl_hot", "soc_rich", "soc_con", "misc_pop_hi", "lang_en", "lang_sp"] },
+  { "n": "Utah (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_des", "cl_cold", "cl_snow", "soc_rich", "misc_pop_hi", "lang_en"] },
+  { "n": "Vermont (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_fst", "cl_cold", "cl_snow", "soc_rich", "soc_lib", "lang_en"] },
+  { "n": "Virginia (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_mtn", "soc_rich", "misc_pop_hi", "lang_en"] },
+  { "n": "Washington (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_mtn", "geo_fst", "cl_cold", "soc_rich", "soc_lib", "misc_pop_hi", "misc_bear", "lang_en"] },
+  { "n": "West Virginia (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_fst", "cl_cold", "soc_rich", "soc_con", "lang_en"] },
+  { "n": "Wisconsin (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_fst", "cl_cold", "cl_snow", "soc_rich", "misc_pop_hi", "lang_en"] },
+  { "n": "Wyoming (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_des", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"] }
+]
+  
+  // Romania soon 
+];
+
+// ==========================================
+// 3. APP LOGIC - CORRECTED RENDER GRID
+// ==========================================
+
+const grid = document.getElementById('grid');
+const filterContainer = document.getElementById('filter-container');
+const searchInput = document.getElementById('search-input');
+const countDisplay = document.getElementById('result-count');
+const dbNameDisplay = document.getElementById('db-name');
+const btnCountry = document.getElementById('mode-country');
+const btnState = document.getElementById('mode-state');
+
+let activeMode = 'country'; // 'country' or 'state'
+let activeFilters = new Set();
+let searchQuery = "";
+
+// --- Render Sidebar Filters ---
+function renderFilters() {
+  filterContainer.innerHTML = `<div class="sidebar-header">Database Filters</div>`;
+  
+  categories.forEach(cat => {
+    const accordion = document.createElement('div');
+    accordion.className = 'accordion';
+    
+    // Header
+    const header = document.createElement('div');
+    header.className = 'accordion-header';
+    header.innerHTML = `<span>${cat.name}</span><span class="icon">▼</span>`;
+    header.onclick = () => accordion.classList.toggle('open');
+    
+    // Content
+    const content = document.createElement('div');
+    content.className = 'accordion-content';
+    const tagContainer = document.createElement('div');
+    tagContainer.className = 'tag-container';
+    
+    cat.tags.forEach(tag => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-tag';
+      btn.textContent = tag.l;
+      btn.id = tag.id;
+      
+      if(activeFilters.has(tag.id)) btn.classList.add('active');
+      
+      btn.onclick = () => toggleFilter(tag.id, btn);
+      tagContainer.appendChild(btn);
+    });
+    
+    content.appendChild(tagContainer);
+    accordion.appendChild(header);
+    accordion.appendChild(content);
+    filterContainer.appendChild(accordion);
+  });
+}
+
+function toggleFilter(id, btn) {
+  if (activeFilters.has(id)) {
+    activeFilters.delete(id);
+    btn.classList.remove('active');
+  } else {
+    activeFilters.add(id);
+    btn.classList.add('active');
+  }
+  renderGrid();
+}
+
+// --- Render Main Grid ---
+function renderGrid() {
+  grid.innerHTML = "";
+  
+  // FIX 1: FLATTEN dbStates so we can iterate over individual entity objects
+  const dataset = activeMode === 'country' ? dbCountries : dbStates.flat();
+  
+  let count = 0;
+  
+  dataset.forEach(item => {
+    // 1. Search Match
+    const matchSearch = item.n.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // 2. Filter Match (AND logic)
+    // This works correctly now because the tags in 'item.t' (data) 
+    // match the IDs in 'activeFilters' (filters)
+    const matchFilters = [...activeFilters].every(tag => item.t.includes(tag));
+    
+    if (matchSearch && matchFilters) {
+      count++;
+      const card = document.createElement('div');
+      card.className = 'card';
+      
+      // Determine color based on tags
+      let badge = "";
+      if(item.t.includes('geo_mtn')) badge = "MOUNTAIN";
+      if(item.t.includes('geo_isl')) badge = "ISLAND";
+      if(item.t.includes('p_usa')) badge = "US STATE";
+      
+      card.innerHTML = `
+        <div class="card-badge">${badge || 'ENTITY'}</div>
+        <div class="card-title">${item.n}</div>
+        <div class="card-sub">${item.t.length} Attributes</div>
+      `;
+      grid.appendChild(card);
+    }
+  });
+  
+  countDisplay.textContent = `${count} Entities Found`;
+}
+
+// --- Mode Switching ---
+btnCountry.addEventListener('click', () => {
+  activeMode = 'country';
+  btnCountry.classList.add('active');
+  btnState.classList.remove('active');
+  dbNameDisplay.textContent = "Countries";
+  activeFilters.clear();
+  searchQuery = "";
+  renderFilters(); // Re-render to clear active classes
+  renderGrid();
+});
+
+btnState.addEventListener('click', () => {
+  activeMode = 'state';
+  btnState.classList.add('active');
+  btnCountry.classList.remove('active');
+  dbNameDisplay.textContent = "Subdivisions";
+  activeFilters.clear();
+  searchQuery = "";
+  renderFilters();
+  renderGrid();
+});
+
+// --- Search & Reset ---
+searchInput.addEventListener('input', (e) => {
+  searchQuery = e.target.value;
+  renderGrid();
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  activeFilters.clear();
+  searchQuery = "";
+  searchInput.value = "";
+  renderFilters();
+  renderGrid();
+});
+
+// Init
+renderFilters();
+renderGrid();
+
+</script>
+</body>
+</html>

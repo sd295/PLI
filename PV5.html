@@ -575,7 +575,7 @@ const dbCountries  = [
 {n:"Vietnam",t:["reg_as","geo_mtn","geo_bch","geo_fst","cl_trop","geo_cst","soc_dev","v_220","dr_r","gov_rep","misc_pop_hi","misc_bear"]},
 {n:"Yemen",t:["reg_as","geo_des","geo_mtn","geo_bch","cl_hot","geo_cst","soc_dev","v_220","dr_r","gov_rep","rel_isl","misc_pop_hi"]},
 {n:"Zambia",t:["reg_af","cl_trop","geo_lnd","soc_dev","v_220","dr_l","gov_rep","rel_chr","lang_en","misc_pop_lo"]},
-{n:"Zimbabwe",t:["reg_af","geo_fst","cl_trop","geo_lnd","soc_dev"]},
+{n:"Zimbabwe",t:["reg_af","geo_fst","cl_trop","geo_lnd","soc_dev"]}
 ];
 
 const dbStates = [
@@ -630,11 +630,7 @@ const dbStates = [
     { "n": "Washington (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_mtn", "geo_fst", "cl_cold", "soc_rich", "soc_lib", "misc_pop_hi", "misc_bear", "lang_en"] },
     { "n": "West Virginia (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_fst", "cl_cold", "soc_rich", "soc_con", "lang_en"] },
     { "n": "Wisconsin (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_fst", "cl_cold", "cl_snow", "soc_rich", "misc_pop_hi", "lang_en"] },
-    { "n": "Wyoming (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_des", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"] }
-  ],
-  
-  // === CANADA PROVINCES/TERRITORIES === (Inherits 'reg_na' region tag)
-  [
+    { "n": "Wyoming (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_des", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"],
     { "n": "Alberta (Canada)", "t": ["p_can", "reg_na", "geo_mtn", "geo_des", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"] },
     { "n": "British Columbia (Canada)", "t": ["p_can", "reg_na", "geo_cst", "geo_mtn", "geo_fst", "cl_cold", "soc_rich", "misc_bear", "lang_en", "lang_fr"] },
     { "n": "Manitoba (Canada)", "t": ["p_can", "reg_na", "geo_lnd", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en", "lang_fr"] },
@@ -647,11 +643,7 @@ const dbStates = [
     { "n": "Saskatchewan (Canada)", "t": ["p_can", "reg_na", "geo_lnd", "cl_cold", "cl_snow", "soc_rich", "lang_en"] },
     { "n": "Northwest Territories (Canada)", "t": ["p_can", "reg_na", "geo_lnd", "geo_riv", "cl_cold", "cl_snow", "soc_dev", "misc_pop_lo", "lang_en"] },
     { "n": "Nunavut (Canada)", "t": ["p_can", "reg_na", "geo_lnd", "geo_isl", "cl_cold", "cl_snow", "soc_dev", "misc_pop_lo", "lang_en"] },
-    { "n": "Yukon (Canada)", "t": ["p_can", "reg_na", "geo_mtn", "cl_cold", "cl_snow", "soc_dev", "misc_pop_lo", "lang_en"] }
-  ],
-
-  // === ROMANIA JUDETE === (Inherits 'reg_eu' region tag)
-  [
+    { "n": "Yukon (Canada)", "t": ["p_can", "reg_na", "geo_mtn", "cl_cold", "cl_snow", "soc_dev", "misc_pop_lo", "lang_en"] },
     { "n": "Alba (RO)", "t": ["p_rom", "reg_eu", "geo_mtn", "geo_fst", "cl_cold", "cl_snow", "soc_dev", "v_220", "dr_r", "misc_hist", "misc_pop_lo"] },
     { "n": "Arad (RO)", "t": ["p_rom", "reg_eu", "geo_lnd", "geo_des", "cl_cold", "soc_dev", "v_220", "dr_r", "misc_pop_lo"] },
     { "n": "Argeș (RO)", "t": ["p_rom", "reg_eu", "geo_mtn", "geo_fst", "cl_cold", "soc_dev", "v_220", "dr_r", "misc_pop_lo"] },
@@ -692,13 +684,13 @@ const dbStates = [
     { "n": "Tulcea (RO)", "t": ["p_rom", "reg_eu", "geo_cst", "geo_riv", "soc_dev", "v_220", "dr_r", "misc_pop_lo"] },
     { "n": "Vâlcea (RO)", "t": ["p_rom", "reg_eu", "geo_mtn", "geo_fst", "cl_cold", "soc_dev", "v_220", "dr_r", "misc_pop_lo"] },
     { "n": "Vaslui (RO)", "t": ["p_rom", "reg_eu", "geo_fst", "cl_cold", "soc_dev", "v_220", "dr_r", "misc_pop_lo"] },
-    { "n": "București (RO)", "t": ["p_rom", "reg_eu", "soc_rich", "misc_pop_hi", "inf_good", "lang_en", "lang_fr"] } // Capital City Special Case
+    { "n": "București (RO)", "t": ["p_rom", "reg_eu", "soc_rich", "misc_pop_hi", "inf_good", "lang_en", "lang_fr"] }// Capital City Special Case
   ]
 ];
 // ... (rest of the script logic)
   
   // Romania soon 
-];
+
 
 // ==========================================
 // 3. APP LOGIC - CORRECTED RENDER GRID

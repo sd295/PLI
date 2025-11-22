@@ -630,7 +630,7 @@ const dbStates = [
     { "n": "Washington (USA)", "t": ["p_usa", "reg_na", "geo_cst", "geo_mtn", "geo_fst", "cl_cold", "soc_rich", "soc_lib", "misc_pop_hi", "misc_bear", "lang_en"] },
     { "n": "West Virginia (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_fst", "cl_cold", "soc_rich", "soc_con", "lang_en"] },
     { "n": "Wisconsin (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_fst", "cl_cold", "cl_snow", "soc_rich", "misc_pop_hi", "lang_en"] },
-    { "n": "Wyoming (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_des", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"],
+    { "n": "Wyoming (USA)", "t": ["p_usa", "reg_na", "geo_lnd", "geo_mtn", "geo_des", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"] },
     { "n": "Alberta (Canada)", "t": ["p_can", "reg_na", "geo_mtn", "geo_des", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en"] },
     { "n": "British Columbia (Canada)", "t": ["p_can", "reg_na", "geo_cst", "geo_mtn", "geo_fst", "cl_cold", "soc_rich", "misc_bear", "lang_en", "lang_fr"] },
     { "n": "Manitoba (Canada)", "t": ["p_can", "reg_na", "geo_lnd", "cl_cold", "cl_snow", "soc_rich", "misc_bear", "lang_en", "lang_fr"] },
@@ -786,6 +786,7 @@ function renderGrid() {
       if(item.t.includes('geo_mtn')) badge = "MOUNTAIN";
       if(item.t.includes('geo_isl')) badge = "ISLAND";
       if(item.t.includes('p_usa')) badge = "US STATE";
+      if(item.t.includes('p_rom')) badge = "ro state"
       
       card.innerHTML = `
         <div class="card-badge">${badge || 'ENTITY'}</div>

@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PI Vision 4</title>
+  <style>
+    :root {
+      --bg-color: #0b0c10;
+      --card-bg: #1f2833;
+      --text-main: #c5c6c7;
+      --accent-cyan: #66fcf1;
+      --accent-teal: #45a29e;
+      --accent-purple: #45098e;
+      --accent-red: #ff4d4d;
+      --scrollbar-track: #141414;
+      --scrollbar-thumb: #45a29e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden; 
+    }
+
+    /* Header */
+    header {
+      background: rgba(11, 12, 16, 0.95);
+      border-bottom: 2px solid var(--accent-teal);
+      padding: 15px 20px;
+      flex-shrink: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      z-index: 100;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      color: var(--accent-cyan);
+      text-shadow: 0 0 5px var(--accent-teal);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    #search-input {
+      background: #000;
+      border: 1px solid var(--accent-teal);
+      color: var(--accent-cyan);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-family: inherit;
+      outline: none;
+      width: 140px;
+      transition: width 0.3s;
+    }
+    
+    #search-input:focus { width: 200px; box-shadow: 0 0 8px var(--accent-cyan); }
+
+    .reset-btn {
+      background: transparent;
+      color: var(--accent-red);
+      border: 1px solid var(--accent-red);
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      border-radius: 4px;
+      transition: 0.3s;
+      font-weight: bold;
+    }
+    
+    .reset-btn:hover { background: var(--accent-red); color: #000; }
+
+    .count-display { font-size: 14px; font-weight: bold; min-width: 80px; text-align: right; }
+
+    /* Main Layout */
+    .container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Sidebar Filters */
+    .filters {
+      background: #111;
+      width: 340px;
+      padding: 20px;
+      border-right: 1px solid var(--card-bg);
+      overflow-y: auto;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-bottom: 50px;
+    }
+
+    /* Scrollbar Styling */
+    .filters::-webkit-scrollbar { width: 8px; }
+    .filters::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+    .filters::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+
+    .category-group { animation: fadeIn 0.5s ease; }
+
+    .category-title {
+      color: var(--accent-teal);
+      font-size: 12px;
+      border-bottom: 1px solid var(--accent-purple);
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: bold;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .filter-btn {
+      background: rgba(255,255,255,0.03);
+      color: #888;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex: 1 0 45%; 
+      text-align: center;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--accent-teal);
+      color: var(--accent-cyan);
+      background: rgba(102, 252, 241, 0.1);
+    }
+
+    .filter-btn.active {
+      background-color: var(--accent-cyan);
+      color: #0b0c10;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+      font-weight: bold;
+    }
+
+    /* Results Area */
+    .results-area {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: radial-gradient(circle at center, #1f2833 0%, #0b0c10 100%);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 15px;
+    }
+
+    .country-card {
+      background-color: rgba(11, 12, 16, 0.8);
+      border: 1px solid rgba(102, 252, 241, 0.2);
+      border-radius: 6px;
+      padding: 15px 10px;
+      text-align: center;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 70px;
+      font-size: 13px;
+      color: var(--text-main);
+      position: relative;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .country-card:hover {
+      background-color: rgba(69, 162, 158, 0.3);
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px rgba(102, 252, 241, 0.3);
+      color: #fff;
+    }
+
+    /* Responsive */
+    @media (max-width: 850px) {
+      .container { flex-direction: column; overflow-y: auto; }
+      .filters { width: 100%; height: 300px; resize: vertical; border-right: none; border-bottom: 1px solid var(--accent-teal); }
+      .results-area { overflow-y: visible; }
+      body { overflow: auto; height: auto; }
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>PI: Omega Finder</h1>
+    <div class="controls">
+      <span class="count-display" id="count">0 found</span>
+      <input type="text" id="search-input" placeholder="Type country...">
+      <button class="reset-btn" id="reset">CLR</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- SIDEBAR WITH 18 CATEGORIES -->
+    <div class="filters">
+      
+      <!-- 1. Region -->
+      <div class="category-group">
+        <div class="category-title">1. Region</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="reg_eu">Europe</button>
+          <button class="filter-btn" id="reg_as">Asia</button>
+          <button class="filter-btn" id="reg_af">Africa</button>
+          <button class="filter-btn" id="reg_na">N. America</button>
+          <button class="filter-btn" id="reg_sa">S. America</button>
+          <button class="filter-btn" id="reg_oc">Oceania</button>
+        </div>
+      </div>
+
+      <!-- 2. Geography -->
+      <div class="category-group">
+        <div class="category-title">2. Geography</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="mountain">Mountain</button>
+          <button class="filter-btn" id="forest">Forest</button>
+          <button class="filter-btn" id="desert">Desert</button>
+          <button class="filter-btn" id="beach">Beach</button>
+          <button class="filter-btn" id="island">Island</button>
+          <button class="filter-btn" id="snow">Snowy</button>
+        </div>
+      </div>
+
+      <!-- 3. Climate -->
+      <div class="category-group">
+        <div class="category-title">3. Climate</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="cold">Cold Winter</button>
+          <button class="filter-btn" id="hot">Hot/Arid</button>
+          <button class="filter-btn" id="tropical">Tropical</button>
+        </div>
+      </div>
+
+      <!-- 4. Hemisphere -->
+      <div class="category-group">
+        <div class="category-title">4. Hemisphere</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="hemi_n">North</button>
+          <button class="filter-btn" id="hemi_s">South</button>
+        </div>
+      </div>
+
+      <!-- 5. Political Blocs (NEW) -->
+      <div class="category-group">
+        <div class="category-title">5. Political Blocs</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="pol_eu">EU Member</button>
+          <button class="filter-btn" id="pol_nato">NATO</button>
+          <button class="filter-btn" id="pol_asean">ASEAN</button>
+          <button class="filter-btn" id="pol_au">African Union</button>
+        </div>
+      </div>
+
+      <!-- 6. Coastline (NEW) -->
+      <div class="category-group">
+        <div class="category-title">6. Coastline Status</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="geo_coast">Coastal</button>
+          <button class="filter-btn" id="geo_land">Landlocked</button>
+        </div>
+      </div>
+
+      <!-- 7. Economy -->
+      <div class="category-group">
+        <div class="category-title">7. Economy Status</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="eco_dev">Developed</button>
+          <button class="filter-btn" id="eco_em">Developing</button>
+        </div>
+      </div>
+
+      <!-- 8. Historical/Colonial (NEW) -->
+      <div class="category-group">
+        <div class="category-title">8. Hist. Influence</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="hist_uk">Ex-British/UK</button>
+          <button class="filter-btn" id="hist_sp">Ex-Spanish</button>
+          <button class="filter-btn" id="hist_fr">Ex-French</button>
+          <button class="filter-btn" id="hist_ussr">Ex-USSR</button>
+        </div>
+      </div>
+
+      <!-- 9. Currency Type (NEW) -->
+      <div class="category-group">
+        <div class="category-title">9. Currency Name</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="cur_eur">Euro</button>
+          <button class="filter-btn" id="cur_dol">Dollar/Peso</button>
+          <button class="filter-btn" id="cur_din">Dinar/Rial</button>
+          <button class="filter-btn" id="cur_fra">Franc</button>
+        </div>
+      </div>
+
+      <!-- 10. Flag Colors (NEW) -->
+      <div class="category-group">
+        <div class="category-title">10. Flag Colors</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="flag_red">Red</button>
+          <button class="filter-btn" id="flag_blu">Blue</button>
+          <button class="filter-btn" id="flag_grn">Green</button>
+          <button class="filter-btn" id="flag_yel">Yellow</button>
+        </div>
+      </div>
+
+      <!-- 11. Power Voltage (NEW) -->
+      <div class="category-group">
+        <div class="category-title">11. Power Voltage</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="volt_110">110-120V</button>
+          <button class="filter-btn" id="volt_220">220-240V</button>
+        </div>
+      </div>
+
+      <!-- 12. Measurement (NEW) -->
+      <div class="category-group">
+        <div class="category-title">12. Measurements</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="meas_met">Metric</button>
+          <button class="filter-btn" id="meas_imp">Imperial/Mix</button>
+        </div>
+      </div>
+
+      <!-- 13. Alphabet/Script (NEW) -->
+      <div class="category-group">
+        <div class="category-title">13. Script</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="scr_lat">Latin</button>
+          <button class="filter-btn" id="scr_cyr">Cyrillic</button>
+          <button class="filter-btn" id="scr_ara">Arabic</button>
+          <button class="filter-btn" id="scr_oth">Other</button>
+        </div>
+      </div>
+
+      <!-- 14. Driving Side -->
+      <div class="category-group">
+        <div class="category-title">14. Driving Side</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="drive_r">Right Side</button>
+          <button class="filter-btn" id="drive_l">Left Side</button>
+        </div>
+      </div>
+
+      <!-- 15. Government -->
+      <div class="category-group">
+        <div class="category-title">15. Government</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="gov_rep">Republic</button>
+          <button class="filter-btn" id="gov_mon">Monarchy</button>
+        </div>
+      </div>
+
+      <!-- 16. Religion -->
+      <div class="category-group">
+        <div class="category-title">16. Maj. Religion</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="rel_chr">Christian</button>
+          <button class="filter-btn" id="rel_isl">Muslim</button>
+          <button class="filter-btn" id="rel_bud">Buddhist</button>
+          <button class="filter-btn" id="rel_hin">Hindu</button>
+        </div>
+      </div>
+
+      <!-- 17. Language -->
+      <div class="category-group">
+        <div class="category-title">17. Maj. Language</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="lang_en">English</button>
+          <button class="filter-btn" id="lang_es">Spanish</button>
+          <button class="filter-btn" id="lang_fr">French</button>
+          <button class="filter-btn" id="lang_ar">Arabic</button>
+        </div>
+      </div>
+
+      <!-- 18. Misc -->
+      <div class="category-group">
+        <div class="category-title">18. Misc</div>
+        <div class="btn-group">
+          <button class="filter-btn" id="bear">Bears</button>
+          <button class="filter-btn" id="pop_big">Big Pop.</button>
+          <button class="filter-btn" id="pop_sml">Small Pop.</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RESULTS GRID -->
+    <div class="results-area">
+      <div class="grid" id="country-grid"></div>
+    </div>
+  </div>
+
+<script>
+/*
+  === DATA LEGEND ===
+  REG: reg_eu, reg_as, reg_af, reg_na, reg_sa, reg_oc
+  GEO: mountain, forest, desert, beach, island, snow
+  CLIM: cold, hot, tropical
+  HEMI: hemi_n, hemi_s
+  POL: pol_eu (EU), pol_nato (NATO), pol_asean, pol_au (African Union)
+  COAST: geo_coast, geo_land
+  ECO: eco_dev, eco_em
+  HIST: hist_uk, hist_sp, hist_fr, hist_ussr (Major influence)
+  CUR: cur_eur, cur_dol (Dollar/Peso), cur_din (Dinar/Rial), cur_fra
+  FLAG: flag_red, flag_blu, flag_grn, flag_yel
+  VOLT: volt_110, volt_220
+  MEAS: meas_met, meas_imp
+  SCR: scr_lat, scr_cyr, scr_ara, scr_oth
+  DRIVE: drive_r, drive_l
+  GOV: gov_rep, gov_mon
+  REL: rel_chr, rel_isl, rel_bud, rel_hin
+  LANG: lang_en, lang_es, lang_fr, lang_ar
+  MISC: bear, pop_big, pop_sml
+*/
+
+const countriesData = [
+{n:"Afghanistan",t:["reg_as","mountain","desert","hot","hemi_n","geo_land","eco_em","cur_oth","flag_grn","flag_red","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","pop_big","bear"]},
+{n:"Albania",t:["reg_eu","mountain","beach","forest","cold","hemi_n","pol_nato","geo_coast","eco_em","cur_oth","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","pop_sml","bear"]},
+{n:"Algeria",t:["reg_af","desert","beach","mountain","hot","hemi_n","pol_au","geo_coast","eco_em","hist_fr","cur_din","flag_grn","flag_red","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","lang_ar","lang_fr","pop_big"]},
+{n:"Andorra",t:["reg_eu","mountain","forest","snow","cold","hemi_n","geo_land","eco_dev","hist_fr","hist_sp","cur_eur","flag_red","flag_yel","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_mon","rel_chr","lang_fr","lang_es","pop_sml","bear"]},
+{n:"Angola",t:["reg_af","forest","beach","hot","tropical","hemi_s","pol_au","geo_coast","eco_em","cur_oth","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_big"]},
+{n:"Antigua & Barbuda",t:["reg_na","island","beach","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_dol","flag_red","flag_blu","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"Argentina",t:["reg_sa","mountain","forest","beach","snow","cold","hemi_s","geo_coast","eco_em","hist_sp","cur_dol","flag_blu","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_big"]},
+{n:"Armenia",t:["reg_as","mountain","forest","cold","hemi_n","geo_land","eco_em","hist_ussr","cur_oth","flag_red","flag_blu","flag_yel","volt_220","meas_met","scr_oth","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Australia",t:["reg_oc","island","desert","beach","forest","hot","hemi_s","geo_coast","eco_dev","hist_uk","cur_dol","flag_blu","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_big"]},
+{n:"Austria",t:["reg_eu","mountain","forest","snow","cold","hemi_n","pol_eu","geo_land","eco_dev","cur_eur","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Azerbaijan",t:["reg_as","mountain","beach","cold","hemi_n","geo_land","eco_em","hist_ussr","cur_oth","flag_blu","flag_red","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","pop_sml","bear"]},
+{n:"Bahamas",t:["reg_na","island","beach","tropical","hemi_n","geo_coast","eco_dev","hist_uk","cur_dol","flag_blu","flag_yel","volt_110","meas_imp","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"Bahrain",t:["reg_as","island","desert","beach","hot","hemi_n","geo_coast","eco_dev","hist_uk","cur_din","flag_red","volt_220","meas_met","scr_ara","drive_r","gov_mon","rel_isl","lang_ar","pop_sml"]},
+{n:"Bangladesh",t:["reg_as","forest","beach","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_oth","flag_grn","flag_red","volt_220","meas_met","scr_oth","drive_l","gov_rep","rel_isl","pop_big","bear"]},
+{n:"Barbados",t:["reg_na","island","beach","tropical","hemi_n","geo_coast","eco_dev","hist_uk","cur_dol","flag_blu","flag_yel","volt_110","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Belarus",t:["reg_eu","forest","snow","cold","hemi_n","geo_land","eco_em","hist_ussr","cur_oth","flag_red","flag_grn","volt_220","meas_met","scr_cyr","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Belgium",t:["reg_eu","forest","beach","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_eur","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_mon","rel_chr","lang_fr","pop_sml"]},
+{n:"Belize",t:["reg_na","forest","beach","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_dol","flag_blu","flag_red","volt_110","meas_imp","scr_lat","drive_r","gov_mon","rel_chr","lang_en","lang_es","pop_sml"]},
+{n:"Benin",t:["reg_af","forest","beach","tropical","hemi_n","pol_au","geo_coast","eco_em","hist_fr","cur_fra","flag_grn","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","pop_sml"]},
+{n:"Bhutan",t:["reg_as","mountain","forest","snow","cold","hemi_n","geo_land","eco_em","cur_oth","flag_yel","flag_red","volt_220","meas_met","scr_oth","drive_l","gov_mon","rel_bud","pop_sml","bear"]},
+{n:"Bolivia",t:["reg_sa","mountain","forest","desert","cold","hemi_s","geo_land","eco_em","hist_sp","cur_oth","flag_red","flag_yel","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml","bear"]},
+{n:"Bosnia & Herz.",t:["reg_eu","mountain","forest","snow","cold","hemi_n","geo_coast","eco_em","cur_oth","flag_blu","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","pop_sml","bear"]},
+{n:"Botswana",t:["reg_af","desert","hot","hemi_s","pol_au","geo_land","eco_em","hist_uk","cur_oth","flag_blu","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Brazil",t:["reg_sa","forest","beach","mountain","tropical","hemi_s","geo_coast","eco_em","cur_oth","flag_grn","flag_yel","flag_blu","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_big"]},
+{n:"Brunei",t:["reg_as","forest","beach","tropical","hemi_n","pol_asean","geo_coast","eco_dev","hist_uk","cur_dol","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_isl","pop_sml","bear"]},
+{n:"Bulgaria",t:["reg_eu","mountain","beach","forest","snow","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_em","cur_oth","flag_red","flag_grn","volt_220","meas_met","scr_cyr","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Burkina Faso",t:["reg_af","desert","hot","hemi_n","pol_au","geo_land","eco_em","hist_fr","cur_fra","flag_red","flag_grn","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_fr","pop_big"]},
+{n:"Burundi",t:["reg_af","mountain","forest","tropical","hemi_s","pol_au","geo_land","eco_em","hist_fr","cur_fra","flag_grn","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","pop_sml"]},
+{n:"Cabo Verde",t:["reg_af","island","beach","mountain","hot","hemi_n","pol_au","geo_coast","eco_em","cur_oth","flag_blu","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml"]},
+{n:"Cambodia",t:["reg_as","forest","beach","tropical","hemi_n","pol_asean","geo_coast","eco_em","hist_fr","cur_oth","flag_blu","flag_red","volt_220","meas_met","scr_oth","drive_r","gov_mon","rel_bud","pop_sml","bear"]},
+{n:"Cameroon",t:["reg_af","mountain","forest","beach","tropical","hemi_n","pol_au","geo_coast","eco_em","hist_fr","hist_uk","cur_fra","flag_grn","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","lang_en","pop_big"]},
+{n:"Canada",t:["reg_na","mountain","forest","snow","beach","island","cold","hemi_n","pol_nato","geo_coast","eco_dev","hist_uk","cur_dol","flag_red","volt_110","meas_met","scr_lat","drive_r","gov_mon","rel_chr","lang_en","lang_fr","pop_big","bear"]},
+{n:"Central African Rep.",t:["reg_af","forest","tropical","hemi_n","pol_au","geo_land","eco_em","hist_fr","cur_fra","flag_blu","flag_yel","flag_grn","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","pop_sml"]},
+{n:"Chad",t:["reg_af","desert","hot","hemi_n","pol_au","geo_land","eco_em","hist_fr","cur_fra","flag_blu","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_fr","lang_ar","pop_sml"]},
+{n:"Chile",t:["reg_sa","mountain","desert","beach","snow","forest","cold","hemi_s","geo_coast","eco_dev","hist_sp","cur_dol","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml"]},
+{n:"China",t:["reg_as","mountain","desert","forest","beach","snow","cold","hemi_n","geo_coast","eco_em","cur_oth","flag_red","flag_yel","volt_220","meas_met","scr_oth","drive_r","gov_rep","rel_oth","pop_big","bear"]},
+{n:"Colombia",t:["reg_sa","mountain","forest","beach","tropical","hemi_n","geo_coast","eco_em","hist_sp","cur_dol","flag_yel","flag_blu","flag_red","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_big","bear"]},
+{n:"Comoros",t:["reg_af","island","beach","mountain","tropical","hemi_s","pol_au","geo_coast","eco_em","hist_fr","cur_fra","flag_yel","flag_grn","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_fr","lang_ar","pop_sml"]},
+{n:"DR Congo",t:["reg_af","forest","mountain","tropical","hemi_s","pol_au","geo_coast","eco_em","cur_fra","flag_blu","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","pop_big"]},
+{n:"Congo Republic",t:["reg_af","forest","tropical","hemi_s","pol_au","geo_coast","eco_em","hist_fr","cur_fra","flag_grn","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","pop_sml"]},
+{n:"Costa Rica",t:["reg_na","forest","beach","mountain","tropical","hemi_n","geo_coast","eco_em","hist_sp","cur_oth","flag_blu","flag_red","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml"]},
+{n:"Côte d'Ivoire",t:["reg_af","forest","beach","tropical","hemi_n","pol_au","geo_coast","eco_em","hist_fr","cur_fra","flag_grn","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_fr","pop_big"]},
+{n:"Croatia",t:["reg_eu","beach","island","mountain","forest","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_eur","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Cuba",t:["reg_na","island","beach","forest","tropical","hemi_n","geo_coast","eco_em","hist_sp","cur_dol","flag_blu","flag_red","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml"]},
+{n:"Cyprus",t:["reg_eu","island","beach","mountain","hot","hemi_n","pol_eu","geo_coast","eco_dev","hist_uk","cur_eur","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","pop_sml"]},
+{n:"Czechia",t:["reg_eu","forest","mountain","snow","cold","hemi_n","pol_eu","pol_nato","geo_land","eco_dev","cur_oth","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml"]},
+{n:"Denmark",t:["reg_eu","beach","island","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_oth","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_mon","rel_chr","pop_sml"]},
+{n:"Djibouti",t:["reg_af","desert","beach","hot","hemi_n","pol_au","geo_coast","eco_em","hist_fr","cur_fra","flag_blu","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_fr","lang_ar","pop_sml"]},
+{n:"Dominica",t:["reg_na","island","mountain","forest","beach","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_dol","flag_grn","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Dominican Rep.",t:["reg_na","island","beach","mountain","forest","tropical","hemi_n","geo_coast","eco_em","hist_sp","cur_dol","flag_blu","flag_red","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml"]},
+{n:"East Timor",t:["reg_as","island","mountain","beach","tropical","hemi_s","geo_coast","eco_em","cur_dol","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","pop_sml"]},
+{n:"Ecuador",t:["reg_sa","mountain","forest","beach","tropical","hemi_s","geo_coast","eco_em","hist_sp","cur_dol","flag_yel","flag_blu","flag_red","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml","bear"]},
+{n:"Egypt",t:["reg_af","desert","beach","hot","hemi_n","pol_au","geo_coast","eco_em","hist_uk","cur_dol","flag_red","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","lang_ar","pop_big"]},
+{n:"El Salvador",t:["reg_na","mountain","beach","forest","tropical","hemi_n","geo_coast","eco_em","hist_sp","cur_dol","flag_blu","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml"]},
+{n:"Equatorial Guinea",t:["reg_af","forest","beach","island","tropical","hemi_n","pol_au","geo_coast","eco_em","hist_sp","cur_fra","flag_grn","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","lang_fr","pop_sml"]},
+{n:"Eritrea",t:["reg_af","desert","beach","mountain","hot","hemi_n","pol_au","geo_coast","eco_em","cur_oth","flag_red","flag_blu","flag_grn","flag_yel","volt_220","meas_met","scr_oth","drive_r","gov_rep","rel_isl","pop_sml"]},
+{n:"Estonia",t:["reg_eu","forest","beach","snow","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","hist_ussr","cur_eur","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_oth","pop_sml","bear"]},
+{n:"Eswatini",t:["reg_af","mountain","hot","hemi_s","pol_au","geo_land","eco_em","hist_uk","cur_oth","flag_blu","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"Ethiopia",t:["reg_af","mountain","desert","hot","hemi_n","pol_au","geo_land","eco_em","cur_oth","flag_grn","flag_yel","flag_red","volt_220","meas_met","scr_oth","drive_r","gov_rep","rel_chr","pop_big"]},
+{n:"Fiji",t:["reg_oc","island","beach","forest","tropical","hemi_s","geo_coast","eco_em","hist_uk","cur_dol","flag_blu","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Finland",t:["reg_eu","forest","island","snow","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_eur","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"France",t:["reg_eu","mountain","beach","forest","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_eur","flag_blu","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","pop_big","bear"]},
+{n:"Gabon",t:["reg_af","forest","beach","tropical","hemi_s","pol_au","geo_coast","eco_em","hist_fr","cur_fra","flag_grn","flag_yel","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","pop_sml"]},
+{n:"Gambia",t:["reg_af","beach","tropical","hemi_n","pol_au","geo_coast","eco_em","hist_uk","cur_oth","flag_red","flag_blu","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_en","pop_sml"]},
+{n:"Georgia",t:["reg_as","mountain","forest","beach","cold","hemi_n","geo_coast","eco_em","hist_ussr","cur_oth","flag_red","volt_220","meas_met","scr_oth","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Germany",t:["reg_eu","forest","mountain","snow","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_eur","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_big","bear"]},
+{n:"Ghana",t:["reg_af","forest","beach","tropical","hemi_n","pol_au","geo_coast","eco_em","hist_uk","cur_oth","flag_red","flag_yel","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_en","pop_big"]},
+{n:"Greece",t:["reg_eu","beach","island","mountain","hot","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_eur","flag_blu","volt_220","meas_met","scr_oth","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Grenada",t:["reg_na","island","beach","forest","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_dol","flag_grn","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"Guatemala",t:["reg_na","mountain","forest","tropical","hemi_n","geo_coast","eco_em","hist_sp","cur_oth","flag_blu","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml"]},
+{n:"Guinea",t:["reg_af","mountain","forest","tropical","hemi_n","pol_au","geo_coast","eco_em","hist_fr","cur_oth","flag_red","flag_yel","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_fr","pop_sml"]},
+{n:"Guinea-Bissau",t:["reg_af","forest","beach","tropical","hemi_n","pol_au","geo_coast","eco_em","cur_fra","flag_red","flag_yel","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","pop_sml"]},
+{n:"Guyana",t:["reg_sa","forest","beach","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_dol","flag_grn","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Haiti",t:["reg_na","island","mountain","beach","tropical","hemi_n","geo_coast","eco_em","hist_fr","cur_oth","flag_blu","flag_red","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","pop_sml"]},
+{n:"Honduras",t:["reg_na","mountain","forest","beach","tropical","hemi_n","geo_coast","eco_em","hist_sp","cur_oth","flag_blu","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml"]},
+{n:"Hungary",t:["reg_eu","cold","hemi_n","pol_eu","pol_nato","geo_land","eco_em","cur_oth","flag_red","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml"]},
+{n:"Iceland",t:["reg_eu","island","beach","snow","cold","hemi_n","pol_nato","geo_coast","eco_dev","cur_oth","flag_blu","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_oth","pop_sml"]},
+{n:"India",t:["reg_as","mountain","desert","forest","beach","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_oth","flag_grn","flag_yel","volt_220","meas_met","scr_oth","drive_l","gov_rep","rel_hin","lang_en","pop_big","bear"]},
+{n:"Indonesia",t:["reg_as","island","forest","beach","tropical","hemi_s","pol_asean","geo_coast","eco_em","cur_oth","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_isl","pop_big","bear"]},
+{n:"Iran",t:["reg_as","mountain","desert","beach","hot","hemi_n","geo_coast","eco_em","cur_din","flag_grn","flag_red","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","pop_big","bear"]},
+{n:"Iraq",t:["reg_as","desert","mountain","hot","hemi_n","geo_coast","eco_em","hist_uk","cur_din","flag_red","flag_grn","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","lang_ar","pop_big","bear"]},
+{n:"Ireland",t:["reg_eu","island","beach","cold","hemi_n","pol_eu","geo_coast","eco_dev","hist_uk","cur_eur","flag_grn","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Israel",t:["reg_as","desert","beach","hot","hemi_n","geo_coast","eco_dev","hist_uk","cur_oth","flag_blu","volt_220","meas_met","scr_oth","drive_r","gov_rep","rel_oth","pop_sml"]},
+{n:"Italy",t:["reg_eu","mountain","beach","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_eur","flag_grn","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_big","bear"]},
+{n:"Jamaica",t:["reg_na","island","beach","mountain","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_dol","flag_grn","flag_yel","volt_110","meas_imp","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"Japan",t:["reg_as","island","mountain","forest","beach","snow","cold","hemi_n","geo_coast","eco_dev","cur_oth","flag_red","volt_110","meas_met","scr_oth","drive_l","gov_mon","rel_oth","pop_big","bear"]},
+{n:"Jordan",t:["reg_as","desert","hot","hemi_n","geo_coast","eco_em","hist_uk","cur_din","flag_red","flag_grn","volt_220","meas_met","scr_ara","drive_r","gov_mon","rel_isl","lang_ar","pop_sml"]},
+{n:"Kazakhstan",t:["reg_as","mountain","desert","snow","cold","hemi_n","geo_land","eco_em","hist_ussr","cur_oth","flag_blu","flag_yel","volt_220","meas_met","scr_cyr","drive_r","gov_rep","rel_isl","pop_sml","bear"]},
+{n:"Kenya",t:["reg_af","mountain","beach","hot","hemi_s","pol_au","geo_coast","eco_em","hist_uk","cur_oth","flag_grn","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_big"]},
+{n:"Kiribati",t:["reg_oc","island","beach","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_dol","flag_red","flag_yel","flag_blu","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"North Korea",t:["reg_as","mountain","forest","beach","snow","cold","hemi_n","geo_coast","eco_em","hist_ussr","cur_oth","flag_red","flag_blu","volt_220","meas_met","scr_oth","drive_r","gov_rep","rel_oth","pop_big","bear"]},
+{n:"South Korea",t:["reg_as","mountain","forest","beach","snow","cold","hemi_n","geo_coast","eco_dev","cur_oth","flag_red","flag_blu","volt_220","meas_met","scr_oth","drive_r","gov_rep","rel_oth","pop_big","bear"]},
+{n:"Kuwait",t:["reg_as","desert","beach","hot","hemi_n","geo_coast","eco_dev","hist_uk","cur_din","flag_grn","flag_red","volt_220","meas_met","scr_ara","drive_r","gov_mon","rel_isl","lang_ar","pop_sml"]},
+{n:"Kyrgyzstan",t:["reg_as","mountain","snow","cold","hemi_n","geo_land","eco_em","hist_ussr","cur_oth","flag_red","flag_yel","volt_220","meas_met","scr_cyr","drive_r","gov_rep","rel_isl","pop_sml","bear"]},
+{n:"Laos",t:["reg_as","mountain","forest","tropical","hemi_n","pol_asean","geo_land","eco_em","hist_fr","cur_oth","flag_red","flag_blu","volt_220","meas_met","scr_oth","drive_r","gov_rep","rel_bud","pop_sml","bear"]},
+{n:"Latvia",t:["reg_eu","forest","beach","snow","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","hist_ussr","cur_eur","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Lebanon",t:["reg_as","mountain","beach","hot","hemi_n","geo_coast","eco_em","hist_fr","cur_oth","flag_red","flag_grn","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","lang_ar","pop_sml"]},
+{n:"Lesotho",t:["reg_af","mountain","cold","hemi_s","pol_au","geo_land","eco_em","hist_uk","cur_oth","flag_blu","flag_grn","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"Liberia",t:["reg_af","forest","beach","tropical","hemi_n","pol_au","geo_coast","eco_em","cur_dol","flag_red","flag_blu","volt_110","meas_imp","scr_lat","drive_r","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Libya",t:["reg_af","desert","beach","hot","hemi_n","pol_au","geo_coast","eco_em","cur_din","flag_red","flag_grn","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","lang_ar","pop_sml"]},
+{n:"Liechtenstein",t:["reg_eu","mountain","snow","cold","hemi_n","geo_land","eco_dev","cur_fra","flag_blu","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_mon","rel_chr","pop_sml"]},
+{n:"Lithuania",t:["reg_eu","forest","snow","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","hist_ussr","cur_eur","flag_yel","flag_grn","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml"]},
+{n:"Luxembourg",t:["reg_eu","forest","cold","hemi_n","pol_eu","pol_nato","geo_land","eco_dev","cur_eur","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_mon","rel_chr","lang_fr","pop_sml"]},
+{n:"Madagascar",t:["reg_af","island","forest","beach","tropical","hemi_s","pol_au","geo_coast","eco_em","hist_fr","cur_oth","flag_red","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","pop_big"]},
+{n:"Malawi",t:["reg_af","mountain","hot","hemi_s","pol_au","geo_land","eco_em","hist_uk","cur_oth","flag_red","flag_grn","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Malaysia",t:["reg_as","forest","beach","island","mountain","tropical","hemi_n","pol_asean","geo_coast","eco_em","hist_uk","cur_oth","flag_red","flag_blu","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_isl","pop_big","bear"]},
+{n:"Maldives",t:["reg_as","island","beach","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_oth","flag_red","flag_grn","volt_220","meas_met","scr_oth","drive_l","gov_rep","rel_isl","pop_sml"]},
+{n:"Mali",t:["reg_af","desert","hot","hemi_n","pol_au","geo_land","eco_em","hist_fr","cur_fra","flag_grn","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_fr","pop_big"]},
+{n:"Malta",t:["reg_eu","island","beach","hot","hemi_n","pol_eu","geo_coast","eco_dev","hist_uk","cur_eur","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Marshall Islands",t:["reg_oc","island","beach","tropical","hemi_n","geo_coast","eco_em","cur_dol","flag_blu","flag_yel","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Mauritania",t:["reg_af","desert","beach","hot","hemi_n","pol_au","geo_coast","eco_em","hist_fr","cur_oth","flag_grn","flag_red","flag_yel","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","lang_ar","pop_sml"]},
+{n:"Mauritius",t:["reg_af","island","beach","mountain","tropical","hemi_s","pol_au","geo_coast","eco_em","hist_uk","hist_fr","cur_oth","flag_red","flag_blu","flag_yel","flag_grn","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_hin","lang_en","lang_fr","pop_sml"]},
+{n:"Mexico",t:["reg_na","desert","beach","mountain","forest","hot","hemi_n","geo_coast","eco_em","hist_sp","cur_dol","flag_grn","flag_red","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_big","bear"]},
+{n:"Micronesia",t:["reg_oc","island","beach","tropical","hemi_n","geo_coast","eco_em","cur_dol","flag_blu","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Moldova",t:["reg_eu","cold","hemi_n","geo_land","eco_em","hist_ussr","cur_oth","flag_blu","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml"]},
+{n:"Monaco",t:["reg_eu","beach","hot","hemi_n","geo_coast","eco_dev","cur_eur","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_mon","rel_chr","lang_fr","pop_sml"]},
+{n:"Mongolia",t:["reg_as","desert","mountain","snow","cold","hemi_n","geo_land","eco_em","cur_oth","flag_red","flag_blu","flag_yel","volt_220","meas_met","scr_cyr","drive_r","gov_rep","rel_bud","pop_sml","bear"]},
+{n:"Montenegro",t:["reg_eu","mountain","beach","forest","cold","hemi_n","pol_nato","geo_coast","eco_em","cur_eur","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Morocco",t:["reg_af","mountain","desert","beach","hot","hemi_n","pol_au","geo_coast","eco_em","hist_fr","cur_din","flag_red","flag_grn","volt_220","meas_met","scr_ara","drive_r","gov_mon","rel_isl","lang_ar","lang_fr","pop_big"]},
+{n:"Mozambique",t:["reg_af","beach","tropical","hemi_s","pol_au","geo_coast","eco_em","cur_oth","flag_grn","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","pop_big"]},
+{n:"Myanmar",t:["reg_as","forest","mountain","tropical","hemi_n","pol_asean","geo_coast","eco_em","hist_uk","cur_oth","flag_yel","flag_grn","flag_red","volt_220","meas_imp","scr_oth","drive_r","gov_rep","rel_bud","pop_big","bear"]},
+{n:"Namibia",t:["reg_af","desert","beach","hot","hemi_s","pol_au","geo_coast","eco_em","cur_dol","flag_blu","flag_red","flag_grn","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Nauru",t:["reg_oc","island","beach","tropical","hemi_s","geo_coast","eco_em","hist_uk","cur_dol","flag_blu","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Nepal",t:["reg_as","mountain","forest","snow","cold","hemi_n","geo_land","eco_em","cur_oth","flag_red","flag_blu","volt_220","meas_met","scr_oth","drive_l","gov_rep","rel_hin","pop_big","bear"]},
+{n:"Netherlands",t:["reg_eu","beach","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_eur","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_mon","rel_oth","pop_sml"]},
+{n:"New Zealand",t:["reg_oc","island","mountain","beach","snow","cold","hemi_s","geo_coast","eco_dev","hist_uk","cur_dol","flag_blu","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_oth","lang_en","pop_sml"]},
+{n:"Nicaragua",t:["reg_na","beach","forest","tropical","hemi_n","geo_coast","eco_em","hist_sp","cur_oth","flag_blu","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml"]},
+{n:"Niger",t:["reg_af","desert","hot","hemi_n","pol_au","geo_land","eco_em","hist_fr","cur_fra","flag_grn","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_fr","pop_big"]},
+{n:"Nigeria",t:["reg_af","forest","tropical","hemi_n","pol_au","geo_coast","eco_em","hist_uk","cur_oth","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_en","pop_big"]},
+{n:"North Macedonia",t:["reg_eu","mountain","cold","hemi_n","pol_nato","geo_land","eco_em","cur_din","flag_red","flag_yel","volt_220","meas_met","scr_cyr","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Norway",t:["reg_eu","mountain","beach","forest","snow","cold","hemi_n","pol_nato","geo_coast","eco_dev","cur_oth","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_mon","rel_chr","pop_sml","bear"]},
+{n:"Oman",t:["reg_as","desert","mountain","beach","hot","hemi_n","geo_coast","eco_dev","hist_uk","cur_din","flag_red","flag_grn","volt_220","meas_met","scr_ara","drive_r","gov_mon","rel_isl","lang_ar","pop_sml"]},
+{n:"Pakistan",t:["reg_as","mountain","desert","beach","hot","hemi_n","geo_coast","eco_em","hist_uk","cur_oth","flag_grn","volt_220","meas_met","scr_ara","drive_l","gov_rep","rel_isl","lang_en","pop_big","bear"]},
+{n:"Palau",t:["reg_oc","island","beach","tropical","hemi_n","geo_coast","eco_em","cur_dol","flag_blu","flag_yel","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Panama",t:["reg_na","forest","beach","tropical","hemi_n","geo_coast","eco_em","hist_sp","cur_dol","flag_red","flag_blu","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml"]},
+{n:"Papua New Guinea",t:["reg_oc","island","mountain","forest","tropical","hemi_s","geo_coast","eco_em","hist_uk","cur_oth","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"Paraguay",t:["reg_sa","forest","hot","hemi_s","geo_land","eco_em","hist_sp","cur_oth","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml"]},
+{n:"Peru",t:["reg_sa","mountain","desert","forest","beach","cold","hemi_s","geo_coast","eco_em","hist_sp","cur_oth","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_big","bear"]},
+{n:"Philippines",t:["reg_as","island","beach","mountain","forest","tropical","hemi_n","pol_asean","geo_coast","eco_em","hist_sp","cur_oth","flag_blu","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_en","pop_big"]},
+{n:"Poland",t:["reg_eu","forest","mountain","beach","snow","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_oth","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_big","bear"]},
+{n:"Portugal",t:["reg_eu","beach","mountain","hot","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_eur","flag_red","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml"]},
+{n:"Qatar",t:["reg_as","desert","beach","hot","hemi_n","geo_coast","eco_dev","hist_uk","cur_din","flag_red","volt_220","meas_met","scr_ara","drive_r","gov_mon","rel_isl","lang_ar","pop_sml"]},
+{n:"Romania",t:["reg_eu","mountain","forest","beach","snow","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_em","cur_oth","flag_blu","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Russia",t:["reg_eu","reg_as","mountain","forest","snow","cold","hemi_n","geo_coast","eco_em","hist_ussr","cur_oth","flag_red","flag_blu","volt_220","meas_met","scr_cyr","drive_r","gov_rep","rel_chr","pop_big","bear"]},
+{n:"Rwanda",t:["reg_af","mountain","forest","tropical","hemi_s","pol_au","geo_land","eco_em","hist_fr","cur_oth","flag_blu","flag_yel","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","lang_en","pop_sml"]},
+{n:"St. Kitts & Nevis",t:["reg_na","island","beach","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_dol","flag_grn","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"St. Lucia",t:["reg_na","island","beach","mountain","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_dol","flag_blu","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"St. Vincent & Gren.",t:["reg_na","island","beach","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_dol","flag_blu","flag_yel","flag_grn","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"Samoa",t:["reg_oc","island","beach","tropical","hemi_s","geo_coast","eco_em","hist_uk","cur_oth","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"San Marino",t:["reg_eu","mountain","cold","hemi_n","geo_land","eco_dev","cur_eur","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml"]},
+{n:"Sao Tome & Principe",t:["reg_af","island","beach","forest","tropical","hemi_n","pol_au","geo_coast","eco_em","cur_oth","flag_grn","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml"]},
+{n:"Saudi Arabia",t:["reg_as","desert","beach","mountain","hot","hemi_n","geo_coast","eco_dev","cur_din","flag_grn","volt_220","meas_met","scr_ara","drive_r","gov_mon","rel_isl","lang_ar","pop_big"]},
+{n:"Senegal",t:["reg_af","beach","hot","hemi_n","pol_au","geo_coast","eco_em","hist_fr","cur_fra","flag_grn","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_fr","pop_sml"]},
+{n:"Serbia",t:["reg_eu","mountain","forest","snow","cold","hemi_n","geo_land","eco_em","cur_din","flag_red","flag_blu","volt_220","meas_met","scr_cyr","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Seychelles",t:["reg_af","island","beach","forest","tropical","hemi_s","pol_au","geo_coast","eco_dev","hist_uk","hist_fr","cur_oth","flag_blu","flag_yel","flag_red","flag_grn","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","lang_fr","pop_sml"]},
+{n:"Sierra Leone",t:["reg_af","beach","forest","tropical","hemi_n","pol_au","geo_coast","eco_em","hist_uk","cur_oth","flag_grn","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","lang_en","pop_sml"]},
+{n:"Singapore",t:["reg_as","island","beach","tropical","hemi_n","pol_asean","geo_coast","eco_dev","hist_uk","cur_dol","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_bud","lang_en","pop_sml"]},
+{n:"Slovakia",t:["reg_eu","mountain","forest","snow","cold","hemi_n","pol_eu","pol_nato","geo_land","eco_dev","cur_eur","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_oth","pop_sml","bear"]},
+{n:"Slovenia",t:["reg_eu","mountain","forest","cold","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_eur","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Solomon Islands",t:["reg_oc","island","beach","forest","tropical","hemi_s","geo_coast","eco_em","hist_uk","cur_dol","flag_blu","flag_yel","flag_grn","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"Somalia",t:["reg_af","desert","beach","hot","hemi_n","pol_au","geo_coast","eco_em","cur_oth","flag_blu","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","pop_sml"]},
+{n:"South Africa",t:["reg_af","mountain","beach","desert","hot","hemi_s","pol_au","geo_coast","eco_em","hist_uk","cur_oth","flag_red","flag_grn","flag_yel","flag_blu","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_big"]},
+{n:"South Sudan",t:["reg_af","tropical","hemi_n","pol_au","geo_land","eco_em","cur_oth","flag_red","flag_grn","flag_blu","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Spain",t:["reg_eu","beach","mountain","island","hot","hemi_n","pol_eu","pol_nato","geo_coast","eco_dev","cur_eur","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_mon","rel_chr","lang_es","pop_big","bear"]},
+{n:"Sri Lanka",t:["reg_as","island","beach","forest","mountain","tropical","hemi_n","geo_coast","eco_em","hist_uk","cur_oth","flag_yel","flag_red","flag_grn","volt_220","meas_met","scr_oth","drive_l","gov_rep","rel_bud","pop_big","bear"]},
+{n:"Sudan",t:["reg_af","desert","hot","hemi_n","pol_au","geo_coast","eco_em","hist_uk","cur_oth","flag_red","flag_grn","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","lang_ar","pop_big"]},
+{n:"Suriname",t:["reg_sa","forest","tropical","hemi_n","geo_coast","eco_em","cur_dol","flag_grn","flag_red","flag_yel","volt_110","meas_met","scr_lat","drive_l","gov_rep","rel_chr","pop_sml"]},
+{n:"Sweden",t:["reg_eu","forest","island","snow","cold","hemi_n","pol_eu","geo_coast","eco_dev","cur_oth","flag_blu","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_mon","rel_oth","pop_sml","bear"]},
+{n:"Switzerland",t:["reg_eu","mountain","forest","snow","cold","hemi_n","geo_land","eco_dev","cur_fra","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","pop_sml","bear"]},
+{n:"Syria",t:["reg_as","desert","mountain","hot","hemi_n","geo_coast","eco_em","hist_fr","cur_oth","flag_red","flag_grn","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","lang_ar","pop_big","bear"]},
+{n:"Tajikistan",t:["reg_as","mountain","snow","cold","hemi_n","geo_land","eco_em","hist_ussr","cur_oth","flag_red","flag_grn","volt_220","meas_met","scr_cyr","drive_r","gov_rep","rel_isl","pop_sml","bear"]},
+{n:"Tanzania",t:["reg_af","mountain","beach","tropical","hemi_s","pol_au","geo_coast","eco_em","hist_uk","cur_oth","flag_grn","flag_blu","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_big"]},
+{n:"Thailand",t:["reg_as","beach","forest","mountain","island","tropical","hemi_n","pol_asean","geo_coast","eco_em","cur_oth","flag_red","flag_blu","volt_220","meas_met","scr_oth","drive_l","gov_mon","rel_bud","pop_big","bear"]},
+{n:"Togo",t:["reg_af","beach","tropical","hemi_n","pol_au","geo_coast","eco_em","hist_fr","cur_fra","flag_grn","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_fr","pop_sml"]},
+{n:"Tonga",t:["reg_oc","island","beach","tropical","hemi_s","geo_coast","eco_em","hist_uk","cur_oth","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"Trinidad & Tobago",t:["reg_na","island","beach","forest","tropical","hemi_n","geo_coast","eco_dev","hist_uk","cur_dol","flag_red","volt_110","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Tunisia",t:["reg_af","desert","beach","mountain","hot","hemi_n","pol_au","geo_coast","eco_em","hist_fr","cur_din","flag_red","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","lang_ar","pop_sml"]},
+{n:"Turkey",t:["reg_as","mountain","beach","forest","snow","cold","hemi_n","pol_nato","geo_coast","eco_em","cur_oth","flag_red","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","pop_big","bear"]},
+{n:"Turkmenistan",t:["reg_as","desert","cold","hemi_n","geo_land","eco_em","hist_ussr","cur_oth","flag_grn","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_isl","pop_sml"]},
+{n:"Tuvalu",t:["reg_oc","island","beach","tropical","hemi_s","geo_coast","eco_em","hist_uk","cur_dol","flag_blu","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_chr","lang_en","pop_sml"]},
+{n:"Uganda",t:["reg_af","forest","mountain","tropical","hemi_n","pol_au","geo_land","eco_em","hist_uk","cur_oth","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_big"]},
+{n:"Ukraine",t:["reg_eu","forest","mountain","beach","snow","cold","hemi_n","geo_coast","eco_em","hist_ussr","cur_oth","flag_blu","flag_yel","volt_220","meas_met","scr_cyr","drive_r","gov_rep","rel_chr","pop_big","bear"]},
+{n:"UAE",t:["reg_as","desert","beach","hot","hemi_n","geo_coast","eco_dev","hist_uk","cur_din","flag_red","flag_grn","volt_220","meas_met","scr_ara","drive_r","gov_mon","rel_isl","lang_ar","pop_sml"]},
+{n:"United Kingdom",t:["reg_eu","island","beach","cold","hemi_n","pol_nato","geo_coast","eco_dev","cur_oth","flag_red","flag_blu","volt_220","meas_met","scr_lat","drive_l","gov_mon","rel_oth","lang_en","pop_big"]},
+{n:"USA",t:["reg_na","mountain","forest","desert","beach","island","snow","cold","hemi_n","pol_nato","geo_coast","eco_dev","hist_uk","cur_dol","flag_red","flag_blu","volt_110","meas_imp","scr_lat","drive_r","gov_rep","rel_chr","lang_en","pop_big","bear"]},
+{n:"Uruguay",t:["reg_sa","beach","cold","hemi_s","geo_coast","eco_dev","hist_sp","cur_oth","flag_blu","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_sml"]},
+{n:"Uzbekistan",t:["reg_as","desert","mountain","cold","hemi_n","geo_land","eco_em","hist_ussr","cur_oth","flag_blu","flag_grn","volt_220","meas_met","scr_cyr","drive_r","gov_rep","rel_isl","pop_big","bear"]},
+{n:"Vanuatu",t:["reg_oc","island","beach","tropical","hemi_s","geo_coast","eco_em","hist_uk","hist_fr","cur_oth","flag_red","flag_grn","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_en","lang_fr","pop_sml"]},
+{n:"Vatican City",t:["reg_eu","cold","hemi_n","geo_land","eco_dev","cur_eur","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_mon","rel_chr","pop_sml"]},
+{n:"Venezuela",t:["reg_sa","mountain","beach","forest","tropical","hemi_n","geo_coast","eco_em","hist_sp","cur_oth","flag_yel","flag_blu","flag_red","volt_110","meas_met","scr_lat","drive_r","gov_rep","rel_chr","lang_es","pop_big","bear"]},
+{n:"Vietnam",t:["reg_as","mountain","beach","forest","tropical","hemi_n","pol_asean","geo_coast","eco_em","hist_fr","cur_oth","flag_red","flag_yel","volt_220","meas_met","scr_lat","drive_r","gov_rep","rel_oth","pop_big","bear"]},
+{n:"Yemen",t:["reg_as","desert","mountain","beach","hot","hemi_n","geo_coast","eco_em","cur_din","flag_red","flag_blk","volt_220","meas_met","scr_ara","drive_r","gov_rep","rel_isl","lang_ar","pop_big"]},
+{n:"Zambia",t:["reg_af","tropical","hemi_s","pol_au","geo_land","eco_em","hist_uk","cur_oth","flag_grn","flag_red","flag_blk","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]},
+{n:"Zimbabwe",t:["reg_af","forest","tropical","hemi_s","pol_au","geo_land","eco_em","hist_uk","cur_dol","flag_grn","flag_yel","flag_red","volt_220","meas_met","scr_lat","drive_l","gov_rep","rel_chr","lang_en","pop_sml"]}
+];
+
+// === CORE LOGIC ===
+const grid = document.getElementById('country-grid');
+const buttons = document.querySelectorAll('.filter-btn');
+const searchInput = document.getElementById('search-input');
+const resetBtn = document.getElementById('reset');
+const countLabel = document.getElementById('count');
+
+let activeFilters = new Set();
+let searchQuery = "";
+
+function render() {
+  grid.innerHTML = "";
+  let count = 0;
+
+  countriesData.forEach(c => {
+    // 1. Text Search
+    const matchesSearch = c.n.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // 2. Filter Tags (Must match ALL selected)
+    const matchesFilters = [...activeFilters].every(tag => c.t.includes(tag));
+
+    if (matchesSearch && matchesFilters) {
+      count++;
+      const card = document.createElement('div');
+      card.className = 'country-card';
+      card.textContent = c.n;
+      grid.appendChild(card);
+    }
+  });
+
+  countLabel.textContent = `${count} found`;
+  countLabel.style.color = count === 0 ? 'var(--accent-red)' : 'var(--text-main)';
+}
+
+buttons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tag = btn.id;
+    if (activeFilters.has(tag)) {
+      activeFilters.delete(tag);
+      btn.classList.remove('active');
+    } else {
+      activeFilters.add(tag);
+      btn.classList.add('active');
+    }
+    render();
+  });
+});
+
+searchInput.addEventListener('input', (e) => {
+  searchQuery = e.target.value;
+  render();
+});
+
+resetBtn.addEventListener('click', () => {
+  activeFilters.clear();
+  searchQuery = "";
+  searchInput.value = "";
+  buttons.forEach(b => b.classList.remove('active'));
+  render();
+});
+
+// Init
+render();
+
+</script>
+</body>
+</html>
